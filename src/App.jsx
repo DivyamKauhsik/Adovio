@@ -50,14 +50,10 @@ function avgScore(answers, questions) {
 }
 
 function getLevel(score) {
-  if (score >= 4.2) return { label:"Strong",   color:T.sage,  bg:T.lime,   desc:"Strong readiness fundamentals are in place." };
-  if (score >= 3.2) return { label:"Moderate", color:T.gold,  bg:T.goldL,  desc:"A reasonable foundation exists but important gaps remain." };
-  if (score >= 2.2) return { label:"At Risk",  color:T.amber, bg:T.amberL, desc:"Significant readiness gaps exist that could derail success." };
-  return               { label:"Critical", color:T.red,   bg:T.redL,   desc:"Immediate action is required before proceeding." };
-}
-
-function formatDate() {
-  return new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  if (score >= 4.2) return { label:"Strong",   color:T.sage,  bg:T.lime   };
+  if (score >= 3.2) return { label:"Moderate", color:T.gold,  bg:T.goldL  };
+  if (score >= 2.2) return { label:"At Risk",  color:T.amber, bg:T.amberL };
+  return               { label:"Critical", color:T.red,   bg:T.redL   };
 }
 
 function buildPrompt(type, context, answers, questions, overall, lv) {
@@ -67,12 +63,12 @@ function buildPrompt(type, context, answers, questions, overall, lv) {
   const highScores = questions.filter(q=>(answers[q.id]||0)>=4).map(q=>q.cat).join(", ");
 
   const system = isChange
-    ? `You are a senior change management consultant with 20+ years of experience. You have deep expertise in ADKAR, Kotter, Bridges, and Prosci methodologies. Your reports are known for being honest, specific, and actionable — never generic. CRITICAL: Never state the obvious. Every insight MUST reference specific scores AND industry context. Every recommendation must be executable tomorrow. Include real research benchmarks. Be direct and honest even when uncomfortable.`
-    : `You are a world-class expert in AI adoption and organisational change. You deeply understand both human and technical dimensions of AI transformation. CRITICAL: Never state the obvious about AI. Reference the organisation's industry. Every recommendation must be executable. Include real research benchmarks. Be honest about AI risks organisations typically underestimate.`;
+    ? `You are a senior change management consultant with 20+ years of experience. Deep expertise in ADKAR, Kotter, Bridges, and Prosci. RULES: Never state the obvious. Reference specific scores AND industry context in every insight. Every recommendation must be executable tomorrow. Include real research benchmarks. Be direct and honest even when uncomfortable.`
+    : `You are a world-class expert in AI adoption and organisational change. RULES: Never state the obvious about AI. Reference the organisation's industry. Every recommendation must be executable. Include real research benchmarks. Be honest about AI risks organisations typically underestimate.`;
 
   const user = `ASSESSMENT: ${isChange ? "Change Readiness" : "AI Adoption Readiness"}
 ORGANISATION: ${context.orgName}
-RESPONDENT ROLE: ${context.role}
+ROLE: ${context.role}
 INITIATIVE: ${context.changeDesc}
 ${context.industry ? `INDUSTRY: ${context.industry}` : ""}
 ${context.size ? `SIZE: ${context.size}` : ""}
@@ -98,26 +94,26 @@ Focus on 2-3 lowest dimensions. State real-world consequences. Give one immediat
 Exactly 5 prioritised actions. Each must include: specific action, owner, timeline, and why this above others.
 
 ## What Good Looks Like
-A vivid specific 90-day picture of success if recommendations are followed. Make it tangible and motivating.`;
+A vivid specific 90-day picture of success. Make it tangible and motivating.`;
 
   return { system, user };
 }
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   html { scroll-behavior:smooth; }
   body { background:${T.off}; color:${T.body}; font-family:'Inter',sans-serif; line-height:1.6; -webkit-font-smoothing:antialiased; }
   ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:${T.light}} ::-webkit-scrollbar-thumb{background:${T.border};border-radius:3px}
   @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
   @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
   .fu{animation:fadeUp .5s ease both}
   .fu1{animation:fadeUp .5s .08s ease both}
   .fu2{animation:fadeUp .5s .16s ease both}
   .fu3{animation:fadeUp .5s .24s ease both}
   .fu4{animation:fadeUp .5s .32s ease both}
   .serif{font-family:'Playfair Display',serif}
-  .mono{font-family:'DM Mono',monospace}
   input,textarea,select{font-family:'Inter',sans-serif}
   button{cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif}
 `;
@@ -189,6 +185,7 @@ function Steps({ current }) {
   );
 }
 
+// ── Screens ────────────────────────────────────────────────────────
 function HomeScreen({ onStart }) {
   return (
     <div>
@@ -197,13 +194,13 @@ function HomeScreen({ onStart }) {
         <div style={{ position:"relative", zIndex:1, maxWidth:680, margin:"0 auto" }}>
           <div className="fu" style={{ marginBottom:20 }}><Badge color={T.lime} bg="rgba(255,255,255,.12)">Free · No Login Required</Badge></div>
           <h1 className="serif fu1" style={{ fontSize:"clamp(36px,6vw,64px)", fontWeight:700, color:T.white, lineHeight:1.15, letterSpacing:-.5, marginBottom:24 }}>Is Your Organisation<br/>Ready for Change?</h1>
-          <p className="fu2" style={{ fontSize:17, color:"rgba(255,255,255,.72)", lineHeight:1.75, maxWidth:520, margin:"0 auto 44px" }}>AI-powered readiness diagnostics for change practitioners and organisations. Get your personalised report in 10 minutes.</p>
+          <p className="fu2" style={{ fontSize:17, color:"rgba(255,255,255,.72)", lineHeight:1.75, maxWidth:520, margin:"0 auto 44px" }}>AI-powered readiness diagnostics for change practitioners and organisations. Get your personalised report delivered to your inbox in minutes.</p>
           <div className="fu3" style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
             <button onClick={()=>onStart("change")} style={{ padding:"14px 32px", borderRadius:8, fontSize:15, fontWeight:600, background:T.white, color:T.forest, border:"none", cursor:"pointer", boxShadow:"0 4px 16px rgba(0,0,0,.2)", transition:"all .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>Change Readiness →</button>
             <button onClick={()=>onStart("ai")} style={{ padding:"14px 32px", borderRadius:8, fontSize:15, fontWeight:600, background:"transparent", color:T.white, border:"1.5px solid rgba(255,255,255,.4)", cursor:"pointer", transition:"all .2s" }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,.1)";e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.transform="translateY(0)";}}>AI Adoption Readiness →</button>
           </div>
           <div className="fu4" style={{ marginTop:56, display:"flex", gap:48, justifyContent:"center", flexWrap:"wrap" }}>
-            {[["10 min","to complete"],["AI-powered","personalised report"],["Free","always"]].map(([v,l])=>(
+            {[["10 min","to complete"],["AI-powered","report to your inbox"],["Free","always"]].map(([v,l])=>(
               <div key={l} style={{ textAlign:"center" }}>
                 <div className="serif" style={{ fontSize:26, fontWeight:700, color:T.white }}>{v}</div>
                 <div style={{ fontSize:12, color:"rgba(255,255,255,.5)", letterSpacing:.5 }}>{l}</div>
@@ -217,7 +214,7 @@ function HomeScreen({ onStart }) {
         <div style={{ textAlign:"center", marginBottom:48 }}>
           <Badge>Two Assessments</Badge>
           <h2 className="serif" style={{ fontSize:34, fontWeight:700, marginTop:16, letterSpacing:-.3 }}>Choose Your Diagnostic</h2>
-          <p style={{ color:T.mid, marginTop:12, maxWidth:480, margin:"12px auto 0", fontSize:15 }}>Each assessment generates a personalised AI report tailored to your specific situation.</p>
+          <p style={{ color:T.mid, marginTop:12, maxWidth:480, margin:"12px auto 0", fontSize:15 }}>Complete the assessment and receive a personalised AI report directly in your inbox.</p>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))", gap:24 }}>
           {[
@@ -243,7 +240,7 @@ function HomeScreen({ onStart }) {
             <p style={{ color:T.mid, lineHeight:1.8, fontSize:14 }}>Built at the intersection of change management practice and AI adoption expertise. Every question reflects what actually drives — or kills — successful transformation.</p>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-            {[["🎯","Practitioner-Grade","Built from real change engagements, not textbooks."],["🤖","AI-Augmented","Claude AI generates personalised, specific recommendations."],["📊","Actionable Output","You leave with a report you can actually use."]].map(([icon,title,desc])=>(
+            {[["🎯","Practitioner-Grade","Built from real change engagements, not textbooks."],["🤖","AI-Augmented","Claude AI generates personalised, specific recommendations."],["📧","Delivered to Your Inbox","Your full report arrives by email — beautifully formatted."]].map(([icon,title,desc])=>(
               <div key={title} style={{ display:"flex", gap:16, padding:"18px 20px", borderRadius:10, background:T.off, border:`1px solid ${T.border}` }}>
                 <div style={{ fontSize:22, flexShrink:0 }}>{icon}</div>
                 <div><div style={{ fontWeight:600, fontSize:14, marginBottom:2 }}>{title}</div><div style={{ fontSize:13, color:T.mid }}>{desc}</div></div>
@@ -255,7 +252,7 @@ function HomeScreen({ onStart }) {
 
       <section style={{ padding:"72px 24px", textAlign:"center" }}>
         <h2 className="serif" style={{ fontSize:32, fontWeight:700, marginBottom:16, letterSpacing:-.3 }}>Know Where You Stand.</h2>
-        <p style={{ color:T.mid, marginBottom:36, fontSize:15 }}>Free assessment. AI-powered report. No login required.</p>
+        <p style={{ color:T.mid, marginBottom:36, fontSize:15 }}>Free assessment. AI-powered report. Delivered to your inbox.</p>
         <div style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
           <PrimaryBtn onClick={()=>onStart("change")}>Change Readiness →</PrimaryBtn>
           <OutlineBtn onClick={()=>onStart("ai")}>AI Adoption Readiness →</OutlineBtn>
@@ -358,7 +355,7 @@ function EmailStep({ type, email, setEmail, name, setName, onNext, onBack }) {
       <div style={{ textAlign:"center", marginBottom:36 }}>
         <div style={{ fontSize:48, marginBottom:16 }}>📬</div>
         <h2 className="serif" style={{ fontSize:30, fontWeight:700, marginBottom:10, letterSpacing:-.3 }}>Where should we send your report?</h2>
-        <p style={{ color:T.mid, fontSize:14, lineHeight:1.7 }}>Your personalised AI report will be displayed immediately on screen.</p>
+        <p style={{ color:T.mid, fontSize:14, lineHeight:1.7 }}>Your personalised AI report will be delivered directly to your inbox — beautifully formatted and ready to share.</p>
       </div>
       <div style={{ background:T.white, border:`1px solid ${T.border}`, borderRadius:12, padding:"32px", display:"flex", flexDirection:"column", gap:20, boxShadow:"0 2px 12px rgba(0,0,0,.05)" }}>
         <TextInput label="Your Full Name" required value={name} onChange={setName} placeholder="e.g. Sarah Johnson"/>
@@ -369,14 +366,14 @@ function EmailStep({ type, email, setEmail, name, setName, onNext, onBack }) {
       </div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:32 }}>
         <OutlineBtn onClick={onBack}>← Back</OutlineBtn>
-        <PrimaryBtn onClick={onNext} disabled={!valid}>Generate My Report →</PrimaryBtn>
+        <PrimaryBtn onClick={onNext} disabled={!valid}>Generate & Send My Report →</PrimaryBtn>
       </div>
     </div>
   );
 }
 
 function GeneratingScreen({ type }) {
-  const steps = ["Analysing your responses across all dimensions…","Identifying risk patterns and readiness gaps…","Benchmarking against change best practices…","Crafting personalised recommendations…","Finalising your report…"];
+  const steps = ["Analysing your responses across all dimensions…","Identifying risk patterns and readiness gaps…","Benchmarking against change best practices…","Crafting personalised recommendations…","Sending your report…"];
   const [step, setStep] = useState(0);
   useEffect(()=>{ const t=setInterval(()=>setStep(s=>Math.min(s+1,steps.length-1)),1800); return()=>clearInterval(t); },[]);
   const accent = type==="change"?T.forest:T.blue;
@@ -394,183 +391,79 @@ function GeneratingScreen({ type }) {
   );
 }
 
-function ScoreGauge({ score }) {
-  const lv = getLevel(score);
-  const pct = ((score-1)/4); const r=56, circ=Math.PI*r, dash=pct*circ;
-  return (
-    <div style={{ textAlign:"center" }}>
-      <svg width={160} height={100} viewBox="0 0 160 100">
-        <path d="M 18 80 A 56 56 0 0 1 142 80" fill="none" stroke={T.light} strokeWidth={12} strokeLinecap="round"/>
-        <path d="M 18 80 A 56 56 0 0 1 142 80" fill="none" stroke={lv.color} strokeWidth={12} strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{ transition:"stroke-dasharray 1.5s ease", filter:`drop-shadow(0 0 8px ${lv.color}60)` }}/>
-        <text x={80} y={72} textAnchor="middle" fill={T.ink} style={{ fontSize:26, fontWeight:700, fontFamily:"'Playfair Display',serif" }}>{score.toFixed(1)}</text>
-        <text x={80} y={88} textAnchor="middle" fill={T.muted} style={{ fontSize:9, fontFamily:"'DM Mono',monospace", letterSpacing:1 }}>OUT OF 5.0</text>
-      </svg>
-      <div style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:4, padding:"4px 14px", borderRadius:100, background:lv.bg }}>
-        <div style={{ width:6, height:6, borderRadius:"50%", background:lv.color }}/>
-        <span style={{ fontSize:12, fontWeight:700, color:lv.color, letterSpacing:.5 }}>{lv.label} Readiness</span>
-      </div>
-    </div>
-  );
-}
-
-function DimensionBar({ cat, score, index }) {
-  const lv = getLevel(score); const pct = ((score-1)/4)*100;
-  const [animated, setAnimated] = useState(false);
-  useEffect(()=>{ const t=setTimeout(()=>setAnimated(true),index*60+400); return()=>clearTimeout(t); },[]);
-  return (
-    <div style={{ display:"grid", gridTemplateColumns:"150px 1fr 44px", alignItems:"center", gap:12, marginBottom:10 }}>
-      <div style={{ fontSize:12, fontWeight:500, color:T.body }}>{cat}</div>
-      <div style={{ height:8, background:T.light, borderRadius:4, overflow:"hidden", border:`1px solid ${T.border}` }}>
-        <div style={{ height:"100%", width:animated?`${pct}%`:"0%", borderRadius:4, background:lv.color, transition:"width .8s ease", boxShadow:`0 0 4px ${lv.color}60` }}/>
-      </div>
-      <div style={{ fontSize:12, fontWeight:700, color:lv.color, fontFamily:"'DM Mono',monospace", textAlign:"right" }}>{score}.0</div>
-    </div>
-  );
-}
-
-function ReportScreen({ data, onRestart, onOther }) {
-  const { answers, context, respondent, type, aiText } = data;
+// ── Confirmation Screen ────────────────────────────────────────────
+function ConfirmationScreen({ data, onRestart, onOther }) {
+  const { context, respondent, type, overall, level } = data;
   const isChange = type==="change";
-  const questions = isChange?CHANGE_Qs:AI_Qs;
   const accent = isChange?T.forest:T.blue;
   const accentBg = isChange?T.lime:T.blueL;
-  const overall = avgScore(answers,questions);
-  const lv = getLevel(overall);
-  const scored = questions.map(q=>({...q,score:answers[q.id]||0}));
-  const weakest = [...scored].sort((a,b)=>a.score-b.score).slice(0,3);
-  const strongest = [...scored].sort((a,b)=>b.score-a.score).slice(0,3);
-  const rawSections = aiText.split(/\n(?=##\s)/).filter(Boolean);
-  const sections = rawSections.map(s=>{ const lines=s.split("\n"); return { heading:lines[0].replace(/^#+\s*/,"").trim(), body:lines.slice(1).join("\n").trim() }; }).filter(s=>s.heading&&s.body);
 
   return (
-    <div style={{ maxWidth:800, margin:"0 auto", padding:"48px 24px 80px" }}>
-      <Steps current={3}/>
+    <div style={{ maxWidth:600, margin:"0 auto", padding:"80px 24px", textAlign:"center" }}>
 
-      {/* Cover */}
-      <div style={{ background:`linear-gradient(135deg,${T.forest} 0%,#0A1F14 100%)`, borderRadius:16, padding:"40px 44px 36px", marginBottom:28, position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", top:-50, right:-50, width:220, height:220, borderRadius:"50%", background:"rgba(255,255,255,.03)" }}/>
-        <div style={{ position:"relative", zIndex:1 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28, flexWrap:"wrap", gap:12 }}>
-            <div>
-              <div className="serif" style={{ fontSize:22, fontWeight:700, color:T.white }}>Ado<span style={{ color:"#D4A843" }}>vio</span></div>
-              <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", letterSpacing:2, marginTop:2 }}>CHANGE INTELLIGENCE PLATFORM</div>
-            </div>
-            <div style={{ textAlign:"right" }}>
-              <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", letterSpacing:1, marginBottom:2 }}>CONFIDENTIAL REPORT</div>
-              <div style={{ fontSize:11, color:"rgba(255,255,255,.5)" }}>{formatDate()}</div>
-            </div>
-          </div>
-          <Badge color={T.lime} bg="rgba(255,255,255,.12)">{isChange?"Change Readiness Assessment":"AI Adoption Readiness Assessment"}</Badge>
-          <h1 className="serif" style={{ fontSize:"clamp(24px,4vw,36px)", fontWeight:700, marginTop:14, marginBottom:6, letterSpacing:-.5, color:T.white }}>{context.orgName}</h1>
-          <p style={{ color:"rgba(255,255,255,.5)", fontSize:12 }}>Prepared for {respondent.name} · {respondent.email} · {formatDate()}</p>
-          {context.changeDesc&&<p style={{ color:"rgba(255,255,255,.4)", fontSize:12, marginTop:8, fontStyle:"italic", maxWidth:500 }}>"{context.changeDesc}"</p>}
-          {(context.industry||context.size)&&(
-            <div style={{ marginTop:16, display:"flex", gap:10, flexWrap:"wrap" }}>
-              {context.industry&&<span style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.7)" }}>{context.industry}</span>}
-              {context.size&&<span style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.7)" }}>{context.size} employees</span>}
-              <span style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.7)" }}>{respondent.role}</span>
-            </div>
-          )}
-        </div>
+      {/* Success Icon */}
+      <div style={{ width:80, height:80, borderRadius:"50%", background:T.lime, border:`3px solid ${T.sage}`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 28px", fontSize:36, animation:"pulse 2s ease infinite" }}>
+        ✅
       </div>
 
-      {/* Score */}
-      <div style={{ background:T.white, borderRadius:12, border:`1px solid ${T.border}`, padding:"36px", marginBottom:24, display:"grid", gridTemplateColumns:"auto 1fr", gap:32, alignItems:"center", boxShadow:"0 2px 12px rgba(0,0,0,.05)" }}>
-        <ScoreGauge score={overall}/>
-        <div>
-          <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6 }}>Overall Readiness Score</div>
-          <div className="serif" style={{ fontSize:36, fontWeight:700, color:lv.color, marginBottom:8 }}>{overall.toFixed(2)}<span style={{ fontSize:18, color:T.muted }}>/5.00</span></div>
-          <p style={{ fontSize:14, color:T.mid, lineHeight:1.7 }}>{lv.desc}</p>
-          <div style={{ marginTop:16, display:"flex", gap:8, flexWrap:"wrap" }}>
-            {[[lv.label,"readiness level"],[`${questions.length} dimensions`,"assessed"],[`${scored.filter(q=>q.score>=4).length} strengths`,"identified"],[`${scored.filter(q=>q.score<3).length} risks`,"flagged"]].map(([v,l])=>(
-              <div key={l} style={{ padding:"6px 12px", borderRadius:8, background:T.off, border:`1px solid ${T.border}` }}>
-                <span style={{ fontWeight:600, fontSize:13 }}>{v}</span><span style={{ color:T.muted, fontSize:12 }}> {l}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Heading */}
+      <h1 className="serif" style={{ fontSize:36, fontWeight:700, marginBottom:12, letterSpacing:-.5, color:T.ink }}>
+        Your Report Is On Its Way!
+      </h1>
+      <p style={{ fontSize:16, color:T.mid, lineHeight:1.7, marginBottom:36 }}>
+        We've sent your personalised {isChange?"Change Readiness":"AI Adoption Readiness"} report to <strong style={{color:T.ink}}>{respondent.email}</strong>. Check your inbox — it should arrive within a couple of minutes.
+      </p>
 
-      {/* Dimensions */}
-      <div style={{ background:T.white, borderRadius:12, border:`1px solid ${T.border}`, padding:"32px", marginBottom:24, boxShadow:"0 2px 12px rgba(0,0,0,.05)" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24, flexWrap:"wrap", gap:12 }}>
-          <h3 className="serif" style={{ fontSize:20, fontWeight:700, letterSpacing:-.2 }}>Dimension Breakdown</h3>
-          <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-            {[[T.red,"Critical"],[T.amber,"At Risk"],[T.gold,"Moderate"],[T.sage,"Strong"]].map(([c,l])=>(
-              <div key={l} style={{ display:"flex", alignItems:"center", gap:5 }}><div style={{ width:8, height:8, borderRadius:2, background:c }}/><span style={{ fontSize:10, color:T.muted }}>{l}</span></div>
-            ))}
-          </div>
+      {/* Score Preview Card */}
+      <div style={{ background:T.white, borderRadius:16, border:`1px solid ${T.border}`, padding:"32px", marginBottom:32, boxShadow:"0 4px 24px rgba(0,0,0,.06)" }}>
+        <div style={{ fontSize:11, fontWeight:600, color:T.muted, letterSpacing:1.5, textTransform:"uppercase", marginBottom:12 }}>Your Overall Score</div>
+        <div className="serif" style={{ fontSize:52, fontWeight:700, color:accent, lineHeight:1, marginBottom:8 }}>{overall.toFixed(2)}</div>
+        <div style={{ fontSize:14, color:T.muted, marginBottom:16 }}>out of 5.00</div>
+        <div style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"8px 20px", borderRadius:100, background:accentBg }}>
+          <div style={{ width:8, height:8, borderRadius:"50%", background:accent }}/>
+          <span style={{ fontSize:14, fontWeight:700, color:accent }}>{level} Readiness</span>
         </div>
-        {scored.map((d,i)=><DimensionBar key={d.cat} cat={d.cat} score={d.score} index={i}/>)}
-      </div>
-
-      {/* Strengths & Risks */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
-        {[["✅ Top Strengths",strongest,T.sage,T.lime,"Leverage as anchors."],["⚠️ Priority Risks",weakest,T.amber,T.amberL,"Address urgently."]].map(([heading,items,color,bg,sub])=>(
-          <div key={heading} style={{ background:T.white, borderRadius:12, border:`1px solid ${T.border}`, padding:"24px", boxShadow:"0 2px 12px rgba(0,0,0,.05)", borderTop:`3px solid ${color}` }}>
-            <div style={{ fontWeight:700, fontSize:13, color, marginBottom:3 }}>{heading}</div>
-            <div style={{ fontSize:11, color:T.muted, marginBottom:14 }}>{sub}</div>
-            {items.map((q,i)=>(
-              <div key={q.id} style={{ padding:"10px 12px", borderRadius:8, background:bg, marginBottom:i<items.length-1?8:0 }}>
-                <div style={{ fontWeight:600, fontSize:12, color, marginBottom:2 }}>{q.cat} — {q.score}.0/5</div>
-                <div style={{ fontSize:11, color:T.mid, lineHeight:1.5 }}>{q.text.length>72?q.text.substring(0,72)+"…":q.text}</div>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-
-      {/* AI Analysis */}
-      <div style={{ marginBottom:32 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:6 }}>
-          <h3 className="serif" style={{ fontSize:22, fontWeight:700, letterSpacing:-.2 }}>AI Analysis & Recommendations</h3>
-          <Badge color={accent} bg={accentBg}>AI Generated</Badge>
-        </div>
-        <p style={{ fontSize:13, color:T.mid, marginBottom:24, lineHeight:1.6 }}>Each section is tailored to your specific scores, industry, and initiative — not generic advice.</p>
-        {sections.length>0 ? sections.map((s,i)=>(
-          <div key={i} style={{ background:T.white, borderRadius:12, padding:"28px 32px", border:`1px solid ${T.border}`, borderLeft:`4px solid ${accent}`, boxShadow:"0 2px 8px rgba(0,0,0,.04)", marginBottom:16, animation:`fadeUp .5s ${i*.08}s ease both` }}>
-            <h4 className="serif" style={{ fontSize:17, fontWeight:700, color:T.ink, marginBottom:12 }}>{s.heading}</h4>
-            <div style={{ fontSize:14, color:T.mid, lineHeight:1.85, whiteSpace:"pre-wrap" }}>{s.body}</div>
-          </div>
-        )) : (
-          <div style={{ background:T.white, borderRadius:12, padding:"28px 32px", border:`1px solid ${T.border}`, borderLeft:`4px solid ${accent}` }}>
-            <div style={{ fontSize:14, color:T.mid, lineHeight:1.85, whiteSpace:"pre-wrap" }}>{aiText}</div>
-          </div>
-        )}
+        <p style={{ fontSize:13, color:T.mid, marginTop:16, lineHeight:1.6 }}>
+          Full analysis, key findings, risk areas, and 5 recommended actions are in your email.
+        </p>
       </div>
 
       {/* LinkedIn CTA */}
-      <div style={{ background:`linear-gradient(135deg,${T.forest}08,${T.sage}08)`, borderRadius:12, border:`1px solid ${T.sage}40`, padding:"28px 32px", marginBottom:24, display:"flex", gap:20, alignItems:"center", flexWrap:"wrap" }}>
-        <div style={{ fontSize:32 }}>💼</div>
+      <div style={{ background:`linear-gradient(135deg,${T.forest}08,${T.sage}08)`, borderRadius:12, border:`1px solid ${T.sage}40`, padding:"28px 32px", marginBottom:32, textAlign:"left", display:"flex", gap:16, alignItems:"center", flexWrap:"wrap" }}>
+        <div style={{ fontSize:28 }}>💼</div>
         <div style={{ flex:1 }}>
-          <div className="serif" style={{ fontSize:16, fontWeight:700, color:T.forest, marginBottom:4 }}>Found this report valuable?</div>
-          <p style={{ fontSize:13, color:T.mid, lineHeight:1.6 }}>Connect on LinkedIn for weekly insights on change management, AI adoption, and organisational transformation.</p>
+          <div className="serif" style={{ fontSize:16, fontWeight:700, color:T.forest, marginBottom:4 }}>Found this valuable?</div>
+          <p style={{ fontSize:13, color:T.mid, lineHeight:1.6 }}>Connect on LinkedIn for weekly insights on change management and AI adoption from the practitioner who built Adovio.</p>
         </div>
-        <a href="https://linkedin.com/in/yourprofile" target="_blank" rel="noreferrer" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 20px", borderRadius:8, background:T.forest, color:T.white, fontSize:13, fontWeight:600, textDecoration:"none", transition:"all .2s", whiteSpace:"nowrap", boxShadow:"0 2px 8px rgba(27,67,50,.25)" }}>Connect on LinkedIn →</a>
+        <a href="https://www.linkedin.com/in/divyamkaushik/" target="_blank" rel="noreferrer" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 20px", borderRadius:8, background:T.forest, color:T.white, fontSize:13, fontWeight:600, textDecoration:"none", whiteSpace:"nowrap", boxShadow:"0 2px 8px rgba(27,67,50,.25)" }}>
+          Connect →
+        </a>
       </div>
 
-      {/* Next Assessment */}
-      <div style={{ background:T.white, borderRadius:12, border:`1px solid ${T.border}`, padding:"36px", textAlign:"center", boxShadow:"0 2px 12px rgba(0,0,0,.05)" }}>
-        <h3 className="serif" style={{ fontSize:20, fontWeight:700, marginBottom:8 }}>{isChange?"Also assess your AI Adoption Readiness":"Also assess your Change Readiness"}</h3>
-        <p style={{ color:T.mid, fontSize:14, marginBottom:24 }}>Get the complete picture of your organisation's transformation readiness.</p>
-        <div style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
-          <PrimaryBtn onClick={onOther}>{isChange?"AI Adoption Readiness →":"Change Readiness →"}</PrimaryBtn>
-          <OutlineBtn onClick={onRestart}>Start Over</OutlineBtn>
-        </div>
+      {/* Check spam notice */}
+      <div style={{ background:T.goldL, borderRadius:10, border:`1px solid ${T.gold}40`, padding:"14px 20px", marginBottom:32, display:"flex", gap:10, alignItems:"center" }}>
+        <span style={{ fontSize:18 }}>💡</span>
+        <p style={{ fontSize:13, color:T.mid, lineHeight:1.5 }}>
+          Can't find the email? Check your <strong>spam or promotions folder</strong> — sometimes AI-generated reports land there on first delivery.
+        </p>
+      </div>
+
+      {/* CTAs */}
+      <div style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
+        <PrimaryBtn onClick={onOther}>{isChange?"Take AI Adoption Assessment →":"Take Change Readiness Assessment →"}</PrimaryBtn>
+        <OutlineBtn onClick={onRestart}>Start Over</OutlineBtn>
       </div>
 
       {/* Footer */}
-      <div style={{ background:T.ink, borderRadius:12, padding:"24px 28px", marginTop:24, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12 }}>
-        <div>
-          <div className="serif" style={{ fontSize:16, fontWeight:700, color:T.white }}>Ado<span style={{ color:"#D4A843" }}>vio</span></div>
-          <div style={{ fontSize:11, color:T.muted, marginTop:2 }}>Human-Centered AI Change Framework · adovio.vercel.app</div>
-        </div>
-        <div style={{ fontSize:11, color:T.muted, textAlign:"right" }}>Free for the change community<br/>Report generated {formatDate()}</div>
+      <div style={{ marginTop:48, paddingTop:24, borderTop:`1px solid ${T.border}` }}>
+        <div className="serif" style={{ fontSize:16, fontWeight:700, color:T.ink }}>Ado<span style={{ color:T.gold }}>vio</span></div>
+        <p style={{ fontSize:11, color:T.muted, marginTop:4 }}>Human-Centered AI Change Framework · adovio.vercel.app</p>
       </div>
     </div>
   );
 }
 
+// ── Main App ───────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen]         = useState("home");
   const [type, setType]             = useState(null);
@@ -578,7 +471,7 @@ export default function App() {
   const [answers, setAnswers]       = useState({});
   const [email, setEmail]           = useState("");
   const [name, setName]             = useState("");
-  const [reportData, setReportData] = useState(null);
+  const [confirmData, setConfirmData] = useState(null);
 
   useEffect(()=>{
     const s=document.createElement("style");
@@ -601,39 +494,61 @@ export default function App() {
     const { system, user } = buildPrompt(type, context, answers, questions, overall, lv);
 
     try {
-      const response = await fetch("/api/generate", {
+      // Step 1 — Generate report
+      const genRes = await fetch("/api/generate", {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
         body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
+          model:"claude-sonnet-4-6",
           max_tokens:1500,
           system,
           messages:[{ role:"user", content:user }]
         }),
       });
 
-      const raw = await response.text();
-      console.log("Raw API response:", raw);
+      const genRaw = await genRes.text();
+      let genData;
+      try { genData = JSON.parse(genRaw); } catch(e) { throw new Error("Invalid response from AI"); }
 
-      let d;
-      try { d = JSON.parse(raw); }
-      catch(e) { throw new Error("Invalid JSON response: " + raw.substring(0,200)); }
+      const aiText = genData?.content?.[0]?.text || "Unable to generate report.";
 
-      console.log("Parsed response:", JSON.stringify(d).substring(0,300));
+      // Step 2 — Send email
+      try {
+        await fetch("/api/email", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify({
+            to: email,
+            name,
+            orgName: context.orgName,
+            type,
+            overall: overall.toFixed(2),
+            level: lv.label,
+            aiText,
+          }),
+        });
+      } catch(emailErr) {
+        console.error("Email send failed:", emailErr);
+        // Continue to confirmation even if email fails
+      }
 
-      const aiText =
-        d?.content?.[0]?.text ||
-        d?.content?.[0]?.value ||
-        d?.completion ||
-        (d?.error ? `API Error: ${typeof d.error === "object" ? d.error.message : d.error}` : null) ||
-        `Raw response: ${raw.substring(0,500)}`;
+      // Step 3 — Show confirmation
+      setConfirmData({
+        context, respondent:{ name, email, role:context.role },
+        type, overall, level:lv.label,
+      });
+      setScreen("confirmation");
+      window.scrollTo(0,0);
 
-      setReportData({ answers, context, respondent:{ name, email, role:context.role }, type, aiText });
     } catch(err) {
       console.error("Generation error:", err);
-      setReportData({ answers, context, respondent:{ name, email, role:context.role }, type, aiText:`Error: ${err.message}` });
+      setConfirmData({
+        context, respondent:{ name, email, role:context.role },
+        type, overall, level:lv.label,
+      });
+      setScreen("confirmation");
+      window.scrollTo(0,0);
     }
-    setScreen("report"); window.scrollTo(0,0);
   };
 
   return (
@@ -646,12 +561,12 @@ export default function App() {
         </div>
       </nav>
 
-      {screen==="home"       && <HomeScreen onStart={resetFor}/>}
-      {screen==="context"    && <ContextStep type={type} context={context} setContext={setContext} onNext={()=>{ setScreen("questions"); window.scrollTo(0,0); }} onBack={()=>setScreen("home")}/>}
-      {screen==="questions"  && <QuestionsStep type={type} answers={answers} setAnswers={setAnswers} onNext={()=>{ setScreen("email"); window.scrollTo(0,0); }} onBack={()=>setScreen("context")}/>}
-      {screen==="email"      && <EmailStep type={type} email={email} setEmail={setEmail} name={name} setName={setName} onNext={handleGenerate} onBack={()=>setScreen("questions")}/>}
-      {screen==="generating" && <GeneratingScreen type={type}/>}
-      {screen==="report"     && reportData && <ReportScreen data={reportData} onRestart={()=>setScreen("home")} onOther={()=>resetFor(type==="change"?"ai":"change")}/>}
+      {screen==="home"         && <HomeScreen onStart={resetFor}/>}
+      {screen==="context"      && <ContextStep type={type} context={context} setContext={setContext} onNext={()=>{ setScreen("questions"); window.scrollTo(0,0); }} onBack={()=>setScreen("home")}/>}
+      {screen==="questions"    && <QuestionsStep type={type} answers={answers} setAnswers={setAnswers} onNext={()=>{ setScreen("email"); window.scrollTo(0,0); }} onBack={()=>setScreen("context")}/>}
+      {screen==="email"        && <EmailStep type={type} email={email} setEmail={setEmail} name={name} setName={setName} onNext={handleGenerate} onBack={()=>setScreen("questions")}/>}
+      {screen==="generating"   && <GeneratingScreen type={type}/>}
+      {screen==="confirmation" && confirmData && <ConfirmationScreen data={confirmData} onRestart={()=>setScreen("home")} onOther={()=>resetFor(type==="change"?"ai":"change")}/>}
     </div>
   );
 }
