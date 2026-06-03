@@ -1,35 +1,15 @@
 import { useState, useEffect } from "react";
 
-// ── API ────────────────────────────────────────────────────────────
-const getApiKey = () => {
-  try { return import.meta?.env?.VITE_ANTHROPIC_API_KEY || ""; }
-  catch(e) { return ""; }
-};
-
-// ── Design Tokens ──────────────────────────────────────────────────
 const T = {
-  white:   "#FFFFFF",
-  off:     "#F8F7F4",
-  light:   "#EEECEA",
-  border:  "#DDD9D0",
-  muted:   "#9E9A92",
-  mid:     "#6B6760",
-  body:    "#2E2C29",
-  ink:     "#141311",
-  forest:  "#1B4332",
-  sage:    "#40916C",
-  lime:    "#D8F3DC",
-  gold:    "#B5883A",
-  goldL:   "#FDF3DC",
-  red:     "#C0392B",
-  redL:    "#FDECEA",
-  amber:   "#C0580A",
-  amberL:  "#FEF0E6",
-  blue:    "#1A5276",
-  blueL:   "#EAF2F8",
+  white:"#FFFFFF", off:"#F8F7F4", light:"#EEECEA", border:"#DDD9D0",
+  muted:"#9E9A92", mid:"#6B6760", body:"#2E2C29", ink:"#141311",
+  forest:"#1B4332", sage:"#40916C", lime:"#D8F3DC",
+  gold:"#B5883A", goldL:"#FDF3DC",
+  red:"#C0392B", redL:"#FDECEA",
+  amber:"#C0580A", amberL:"#FEF0E6",
+  blue:"#1A5276", blueL:"#EAF2F8",
 };
 
-// ── Questions ──────────────────────────────────────────────────────
 const CHANGE_Qs = [
   { id:"c1",  cat:"Leadership",    text:"Leadership actively champions this change with visible commitment and clear messaging." },
   { id:"c2",  cat:"Communication", text:"Employees understand WHY this change is happening and what it means for them personally." },
@@ -64,99 +44,65 @@ const SCALE = [
   { v:5, label:"Strongly Agree" },
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────
 function avgScore(answers, questions) {
   const vals = questions.map(q => answers[q.id] || 0).filter(v => v > 0);
   return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
 }
+
 function getLevel(score) {
   if (score >= 4.2) return { label:"Strong",   color:T.sage,  bg:T.lime,   desc:"Strong readiness fundamentals are in place." };
   if (score >= 3.2) return { label:"Moderate", color:T.gold,  bg:T.goldL,  desc:"A reasonable foundation exists but important gaps remain." };
   if (score >= 2.2) return { label:"At Risk",  color:T.amber, bg:T.amberL, desc:"Significant readiness gaps exist that could derail success." };
   return               { label:"Critical", color:T.red,   bg:T.redL,   desc:"Immediate action is required before proceeding." };
 }
+
 function formatDate() {
   return new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
 }
 
-// ── Enhanced AI Prompt Builder ─────────────────────────────────────
 function buildPrompt(type, context, answers, questions, overall, lv) {
   const isChange = type === "change";
-  const scoreLines = questions.map(q =>
-    `  • ${q.cat} (${answers[q.id]||0}/5): "${q.text}"`
-  ).join("\n");
-
+  const scoreLines = questions.map(q => `  • ${q.cat} (${answers[q.id]||0}/5): "${q.text}"`).join("\n");
   const lowScores = questions.filter(q=>(answers[q.id]||0)<=2.5).map(q=>q.cat).join(", ");
   const highScores = questions.filter(q=>(answers[q.id]||0)>=4).map(q=>q.cat).join(", ");
 
   const system = isChange
-    ? `You are a senior change management consultant with 20+ years of experience across Financial Services, Healthcare, Technology, Government, and Retail. You have deep expertise in ADKAR, Kotter, Bridges, and Prosci methodologies. You write reports that are read by executives and change practitioners. Your reports are known for being honest, specific, and actionable — never generic.
-
-CRITICAL RULES FOR THIS REPORT:
-- Never state the obvious. If an insight could appear in any change management textbook, reframe it with specific context.
-- Every insight MUST reference the specific score AND the organisation's industry/size context.
-- Every recommendation must be specific enough to execute tomorrow morning — not "improve communication" but exactly HOW and WHO.
-- Include real research benchmarks where relevant (Prosci, McKinsey, Kotter research).
-- Challenge comfortable assumptions — if a score looks okay but hides a risk pattern, name it directly.
-- Write as a trusted advisor who has seen this type of initiative fail before and knows exactly why.
-- Be direct and honest even when uncomfortable. Leaders pay for truth, not reassurance.
-- Reference the specific change initiative described — make it feel personal, not templated.`
-    : `You are a world-class expert in AI adoption and organisational change — someone who has guided 50+ organisations through AI transformation and understands both the technical and deeply human dimensions. You write reports that cut through AI hype to the real organisational challenges.
-
-CRITICAL RULES FOR THIS REPORT:
-- Never state the obvious about AI. Go beyond "employees fear job loss" to the specific dynamics at play.
-- Reference the organisation's industry — AI adoption challenges differ vastly between Financial Services, Healthcare, Retail etc.
-- Every recommendation must be executable — specific, owned, time-bound.
-- Include real research benchmarks (McKinsey, MIT Sloan, Gartner AI adoption research).
-- Be honest about AI risks that organisations typically underestimate.
-- Address the specific change described — make every insight feel tailored, not generic.
-- Write as someone who deeply respects both the power of AI and the complexity of human organisations.`;
+    ? `You are a senior change management consultant with 20+ years of experience. You have deep expertise in ADKAR, Kotter, Bridges, and Prosci methodologies. Your reports are known for being honest, specific, and actionable — never generic. CRITICAL: Never state the obvious. Every insight MUST reference specific scores AND industry context. Every recommendation must be executable tomorrow. Include real research benchmarks. Be direct and honest even when uncomfortable.`
+    : `You are a world-class expert in AI adoption and organisational change. You deeply understand both human and technical dimensions of AI transformation. CRITICAL: Never state the obvious about AI. Reference the organisation's industry. Every recommendation must be executable. Include real research benchmarks. Be honest about AI risks organisations typically underestimate.`;
 
   const user = `ASSESSMENT: ${isChange ? "Change Readiness" : "AI Adoption Readiness"}
 ORGANISATION: ${context.orgName}
 RESPONDENT ROLE: ${context.role}
-INITIATIVE DESCRIPTION: ${context.changeDesc}
+INITIATIVE: ${context.changeDesc}
 ${context.industry ? `INDUSTRY: ${context.industry}` : ""}
-${context.size ? `ORGANISATION SIZE: ${context.size}` : ""}
+${context.size ? `SIZE: ${context.size}` : ""}
 OVERALL SCORE: ${overall.toFixed(2)}/5.0 — ${lv.label}
-LOW-SCORING AREAS (≤2.5): ${lowScores || "None"}
-HIGH-SCORING AREAS (≥4.0): ${highScores || "None"}
+LOW SCORES (<=2.5): ${lowScores || "None"}
+HIGH SCORES (>=4.0): ${highScores || "None"}
 
-FULL DIMENSION SCORES:
+SCORES:
 ${scoreLines}
 
-Write a comprehensive, specific, non-generic report with EXACTLY these five sections. Use ## for section headings.
+Write a report with EXACTLY these five sections using ## headings:
 
 ## Executive Summary
-3–4 sentences. Be direct and honest. Reference the overall score AND what it specifically means for THIS organisation's initiative. Name the single most important thing they need to know.
+3-4 sentences. Direct and honest. Reference the overall score and what it means for THIS specific initiative.
 
 ## Key Findings
-Provide exactly 4 findings. Each must:
-- Reference a specific score by name
-- Explain what that score ACTUALLY means in their industry/size context (not just "this is low")
-- Reveal a non-obvious implication or hidden risk
-Format each finding with a bold title followed by the insight.
+Exactly 4 findings. Each must reference a specific score, explain what it means in their industry context, and reveal a non-obvious implication. Use bold titles.
 
-## Critical Risk Areas  
-Focus on the 2–3 lowest-scoring dimensions. For each:
-- State the real-world consequence of leaving this unaddressed (be specific about what failure looks like)
-- Reference the industry context (how does this risk manifest differently in their sector?)
-- Give one immediate action that addresses the root cause, not the symptom
+## Critical Risk Areas
+Focus on 2-3 lowest dimensions. State real-world consequences. Give one immediate action per risk.
 
 ## Recommended Actions
-Provide exactly 5 prioritised actions. Each must include:
-- A specific, executable action (not a vague directive)
-- Who should own it
-- A realistic timeline
-- Why this action above others
+Exactly 5 prioritised actions. Each must include: specific action, owner, timeline, and why this above others.
 
 ## What Good Looks Like
-Paint a vivid, specific 90-day picture of what success looks like if these recommendations are followed. Make it tangible and motivating. Reference specific dimensions that will improve. End with one sentence about the long-term competitive advantage of getting this right.`;
+A vivid specific 90-day picture of success if recommendations are followed. Make it tangible and motivating.`;
 
   return { system, user };
 }
 
-// ── Global CSS ─────────────────────────────────────────────────────
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -165,7 +111,6 @@ const CSS = `
   ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:${T.light}} ::-webkit-scrollbar-thumb{background:${T.border};border-radius:3px}
   @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
   @keyframes spin{to{transform:rotate(360deg)}}
-  @keyframes barGrow{from{width:0}to{width:var(--target-width)}}
   .fu{animation:fadeUp .5s ease both}
   .fu1{animation:fadeUp .5s .08s ease both}
   .fu2{animation:fadeUp .5s .16s ease both}
@@ -177,7 +122,6 @@ const CSS = `
   button{cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif}
 `;
 
-// ── Shared Components ──────────────────────────────────────────────
 function Badge({ children, color=T.forest, bg=T.lime }) {
   return <span style={{ display:"inline-block", padding:"3px 12px", borderRadius:100, background:bg, color, fontSize:11, fontWeight:600, letterSpacing:.8, textTransform:"uppercase" }}>{children}</span>;
 }
@@ -186,12 +130,10 @@ function PrimaryBtn({ children, onClick, disabled, full, small }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
       display:"inline-flex", alignItems:"center", justifyContent:"center", gap:8,
-      padding: small?"9px 20px":"13px 32px", borderRadius:8,
-      fontSize: small?13:14, fontWeight:600,
+      padding:small?"9px 20px":"13px 32px", borderRadius:8, fontSize:small?13:14, fontWeight:600,
       background:disabled?T.border:T.forest, color:disabled?T.muted:T.white,
       cursor:disabled?"not-allowed":"pointer", transition:"all .2s",
-      width:full?"100%":"auto",
-      boxShadow:disabled?"none":"0 2px 8px rgba(27,67,50,.25)", letterSpacing:.3,
+      width:full?"100%":"auto", boxShadow:disabled?"none":"0 2px 8px rgba(27,67,50,.25)", letterSpacing:.3,
     }}
       onMouseEnter={e=>{if(!disabled){e.currentTarget.style.background="#163829";e.currentTarget.style.transform="translateY(-1px)";}}}
       onMouseLeave={e=>{e.currentTarget.style.background=disabled?T.border:T.forest;e.currentTarget.style.transform="translateY(0)";}}
@@ -240,14 +182,13 @@ function Steps({ current }) {
             <div style={{ width:32, height:32, borderRadius:"50%", background:i<=current?T.forest:T.white, border:`2px solid ${i<=current?T.forest:T.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:600, color:i<=current?T.white:T.muted, transition:"all .3s" }}>{i<current?"✓":i+1}</div>
             <span style={{ fontSize:10, fontWeight:500, color:i===current?T.forest:T.muted, whiteSpace:"nowrap", letterSpacing:.4 }}>{s.toUpperCase()}</span>
           </div>
-          {i<steps.length-1 && <div style={{ flex:1, height:2, background:i<current?T.forest:T.border, margin:"0 8px", marginBottom:16, transition:"background .3s" }}/>}
+          {i<steps.length-1&&<div style={{ flex:1, height:2, background:i<current?T.forest:T.border, margin:"0 8px", marginBottom:16, transition:"background .3s" }}/>}
         </div>
       ))}
     </div>
   );
 }
 
-// ── Screens ────────────────────────────────────────────────────────
 function HomeScreen({ onStart }) {
   return (
     <div>
@@ -255,21 +196,11 @@ function HomeScreen({ onStart }) {
         <div style={{ position:"absolute", inset:0, opacity:.04, backgroundImage:`radial-gradient(circle,white 1px,transparent 1px)`, backgroundSize:"32px 32px" }}/>
         <div style={{ position:"relative", zIndex:1, maxWidth:680, margin:"0 auto" }}>
           <div className="fu" style={{ marginBottom:20 }}><Badge color={T.lime} bg="rgba(255,255,255,.12)">Free · No Login Required</Badge></div>
-          <h1 className="serif fu1" style={{ fontSize:"clamp(36px,6vw,64px)", fontWeight:700, color:T.white, lineHeight:1.15, letterSpacing:-.5, marginBottom:24 }}>
-            Is Your Organisation<br/>Ready for Change?
-          </h1>
-          <p className="fu2" style={{ fontSize:17, color:"rgba(255,255,255,.72)", lineHeight:1.75, maxWidth:520, margin:"0 auto 44px" }}>
-            AI-powered readiness diagnostics for change practitioners and organisations. Get your personalised report in 10 minutes.
-          </p>
+          <h1 className="serif fu1" style={{ fontSize:"clamp(36px,6vw,64px)", fontWeight:700, color:T.white, lineHeight:1.15, letterSpacing:-.5, marginBottom:24 }}>Is Your Organisation<br/>Ready for Change?</h1>
+          <p className="fu2" style={{ fontSize:17, color:"rgba(255,255,255,.72)", lineHeight:1.75, maxWidth:520, margin:"0 auto 44px" }}>AI-powered readiness diagnostics for change practitioners and organisations. Get your personalised report in 10 minutes.</p>
           <div className="fu3" style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
-            <button onClick={()=>onStart("change")} style={{ padding:"14px 32px", borderRadius:8, fontSize:15, fontWeight:600, background:T.white, color:T.forest, border:"none", cursor:"pointer", boxShadow:"0 4px 16px rgba(0,0,0,.2)", transition:"all .2s" }}
-              onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
-              onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}
-            >Change Readiness →</button>
-            <button onClick={()=>onStart("ai")} style={{ padding:"14px 32px", borderRadius:8, fontSize:15, fontWeight:600, background:"transparent", color:T.white, border:"1.5px solid rgba(255,255,255,.4)", cursor:"pointer", transition:"all .2s" }}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,.1)";e.currentTarget.style.transform="translateY(-2px)";}}
-              onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.transform="translateY(0)";}}
-            >AI Adoption Readiness →</button>
+            <button onClick={()=>onStart("change")} style={{ padding:"14px 32px", borderRadius:8, fontSize:15, fontWeight:600, background:T.white, color:T.forest, border:"none", cursor:"pointer", boxShadow:"0 4px 16px rgba(0,0,0,.2)", transition:"all .2s" }} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>Change Readiness →</button>
+            <button onClick={()=>onStart("ai")} style={{ padding:"14px 32px", borderRadius:8, fontSize:15, fontWeight:600, background:"transparent", color:T.white, border:"1.5px solid rgba(255,255,255,.4)", cursor:"pointer", transition:"all .2s" }} onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,.1)";e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.transform="translateY(0)";}}>AI Adoption Readiness →</button>
           </div>
           <div className="fu4" style={{ marginTop:56, display:"flex", gap:48, justifyContent:"center", flexWrap:"wrap" }}>
             {[["10 min","to complete"],["AI-powered","personalised report"],["Free","always"]].map(([v,l])=>(
@@ -293,16 +224,11 @@ function HomeScreen({ onStart }) {
             { type:"change", icon:"🔄", title:"Change Readiness", desc:"Assess organisational readiness across 10 critical dimensions — leadership, communication, capacity, resistance, and more.", tags:["Leadership","Stakeholders","Capacity","Resistance"], color:T.forest, bg:T.lime },
             { type:"ai", icon:"🤖", title:"AI Adoption Readiness", desc:"Diagnose how prepared your people, culture, and leadership are to successfully adopt AI — and where the human risks lie.", tags:["Culture","Trust","Manager Readiness","Narrative"], color:T.blue, bg:T.blueL },
           ].map(c=>(
-            <div key={c.type} style={{ background:T.white, borderRadius:14, border:`1px solid ${T.border}`, padding:"36px 32px", transition:"all .2s", boxShadow:"0 2px 12px rgba(0,0,0,.05)" }}
-              onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 8px 32px rgba(0,0,0,.1)";e.currentTarget.style.transform="translateY(-3px)";}}
-              onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 2px 12px rgba(0,0,0,.05)";e.currentTarget.style.transform="translateY(0)";}}
-            >
+            <div key={c.type} style={{ background:T.white, borderRadius:14, border:`1px solid ${T.border}`, padding:"36px 32px", transition:"all .2s", boxShadow:"0 2px 12px rgba(0,0,0,.05)" }} onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 8px 32px rgba(0,0,0,.1)";e.currentTarget.style.transform="translateY(-3px)";}} onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 2px 12px rgba(0,0,0,.05)";e.currentTarget.style.transform="translateY(0)";}}>
               <div style={{ fontSize:36, marginBottom:20 }}>{c.icon}</div>
               <Badge color={c.color} bg={c.bg}>{c.title}</Badge>
               <p style={{ color:T.mid, fontSize:14, lineHeight:1.7, margin:"16px 0 24px" }}>{c.desc}</p>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:28 }}>
-                {c.tags.map(t=><span key={t} style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:T.off, color:T.mid, fontWeight:500 }}>{t}</span>)}
-              </div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:28 }}>{c.tags.map(t=><span key={t} style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:T.off, color:T.mid, fontWeight:500 }}>{t}</span>)}</div>
               <PrimaryBtn onClick={()=>onStart(c.type)}>Start Assessment →</PrimaryBtn>
             </div>
           ))}
@@ -320,10 +246,7 @@ function HomeScreen({ onStart }) {
             {[["🎯","Practitioner-Grade","Built from real change engagements, not textbooks."],["🤖","AI-Augmented","Claude AI generates personalised, specific recommendations."],["📊","Actionable Output","You leave with a report you can actually use."]].map(([icon,title,desc])=>(
               <div key={title} style={{ display:"flex", gap:16, padding:"18px 20px", borderRadius:10, background:T.off, border:`1px solid ${T.border}` }}>
                 <div style={{ fontSize:22, flexShrink:0 }}>{icon}</div>
-                <div>
-                  <div style={{ fontWeight:600, fontSize:14, marginBottom:2 }}>{title}</div>
-                  <div style={{ fontSize:13, color:T.mid }}>{desc}</div>
-                </div>
+                <div><div style={{ fontWeight:600, fontSize:14, marginBottom:2 }}>{title}</div><div style={{ fontSize:13, color:T.mid }}>{desc}</div></div>
               </div>
             ))}
           </div>
@@ -348,7 +271,7 @@ function HomeScreen({ onStart }) {
 
 function ContextStep({ type, context, setContext, onNext, onBack }) {
   const accent = type==="change"?T.forest:T.blue;
-  const valid = context.orgName && context.role && context.changeDesc;
+  const valid = context.orgName&&context.role&&context.changeDesc;
   return (
     <div style={{ maxWidth:620, margin:"0 auto", padding:"48px 24px" }}>
       <Steps current={0}/>
@@ -360,15 +283,10 @@ function ContextStep({ type, context, setContext, onNext, onBack }) {
         <TextInput label="Your Role" required value={context.role} onChange={v=>setContext(c=>({...c,role:v}))} placeholder="e.g. Change Manager, HR Director, Project Sponsor"/>
         <div>
           <Label required>Briefly describe the change or initiative</Label>
-          <textarea value={context.changeDesc} onChange={e=>setContext(c=>({...c,changeDesc:e.target.value}))}
-            placeholder={type==="change"?"e.g. We are implementing a new ERP system across 3 business units over 18 months...":"e.g. We are rolling out Microsoft Copilot to 500 employees in Q3..."}
-            rows={3} style={{ width:"100%", padding:"11px 14px", borderRadius:7, fontSize:14, border:`1.5px solid ${T.border}`, background:T.white, color:T.ink, outline:"none", resize:"vertical", transition:"border-color .2s" }}
-            onFocus={e=>e.target.style.borderColor=accent} onBlur={e=>e.target.style.borderColor=T.border}
-          />
+          <textarea value={context.changeDesc} onChange={e=>setContext(c=>({...c,changeDesc:e.target.value}))} placeholder={type==="change"?"e.g. Implementing a new ERP system across 3 business units...":"e.g. Rolling out Microsoft Copilot to 500 employees in Q3..."} rows={3} style={{ width:"100%", padding:"11px 14px", borderRadius:7, fontSize:14, border:`1.5px solid ${T.border}`, background:T.white, color:T.ink, outline:"none", resize:"vertical", transition:"border-color .2s" }} onFocus={e=>e.target.style.borderColor=accent} onBlur={e=>e.target.style.borderColor=T.border}/>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-          {[["Industry",["Financial Services","Healthcare","Technology","Government","Retail","Manufacturing","Education","Professional Services","Other"],"industry"],
-            ["Organisation Size",["1–50","51–200","201–1,000","1,001–5,000","5,000+"],"size"]].map(([lbl,opts,key])=>(
+          {[["Industry",["Financial Services","Healthcare","Technology","Government","Retail","Manufacturing","Education","Professional Services","Other"],"industry"],["Organisation Size",["1–50","51–200","201–1,000","1,001–5,000","5,000+"],"size"]].map(([lbl,opts,key])=>(
             <div key={key}>
               <Label>{lbl}</Label>
               <select value={context[key]} onChange={e=>setContext(c=>({...c,[key]:e.target.value}))} style={{ width:"100%", padding:"11px 14px", borderRadius:7, fontSize:14, border:`1.5px solid ${T.border}`, background:T.white, color:T.body, outline:"none" }}>
@@ -414,10 +332,9 @@ function QuestionsStep({ type, answers, setAnswers, onNext, onBack }) {
               {SCALE.map(s=>{
                 const active=sel===s.v;
                 return (
-                  <button key={s.v} onClick={()=>setAnswers(a=>({...a,[q.id]:s.v}))} style={{ padding:"7px 14px", borderRadius:6, fontSize:12, fontWeight:500, background:active?accent:T.white, color:active?T.white:T.mid, border:`1.5px solid ${active?accent:T.border}`, transition:"all .15s" }}
-                    onMouseEnter={e=>{if(!active){e.currentTarget.style.borderColor=accent;e.currentTarget.style.color=accent;}}}
-                    onMouseLeave={e=>{if(!active){e.currentTarget.style.borderColor=T.border;e.currentTarget.style.color=T.mid;}}}
-                  ><span style={{fontWeight:700}}>{s.v}</span></button>
+                  <button key={s.v} onClick={()=>setAnswers(a=>({...a,[q.id]:s.v}))} style={{ padding:"7px 14px", borderRadius:6, fontSize:12, fontWeight:500, background:active?accent:T.white, color:active?T.white:T.mid, border:`1.5px solid ${active?accent:T.border}`, transition:"all .15s" }} onMouseEnter={e=>{if(!active){e.currentTarget.style.borderColor=accent;e.currentTarget.style.color=accent;}}} onMouseLeave={e=>{if(!active){e.currentTarget.style.borderColor=T.border;e.currentTarget.style.color=T.mid;}}}>
+                    <span style={{fontWeight:700}}>{s.v}</span>
+                  </button>
                 );
               })}
               <span style={{ fontSize:11, color:T.muted, alignSelf:"center", marginLeft:4 }}>{sel?SCALE.find(s=>s.v===sel)?.label:"1 = Strongly Disagree · 5 = Strongly Agree"}</span>
@@ -477,27 +394,14 @@ function GeneratingScreen({ type }) {
   );
 }
 
-// ── Report Components ──────────────────────────────────────────────
 function ScoreGauge({ score }) {
   const lv = getLevel(score);
-  const pct = ((score-1)/4)*100;
-  const r=56, circumference=Math.PI*r;
-  const dash=(pct/100)*circumference;
+  const pct = ((score-1)/4); const r=56, circ=Math.PI*r, dash=pct*circ;
   return (
     <div style={{ textAlign:"center" }}>
       <svg width={160} height={100} viewBox="0 0 160 100">
-        <defs>
-          <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={T.red}/>
-            <stop offset="40%" stopColor={T.amber}/>
-            <stop offset="70%" stopColor={T.gold}/>
-            <stop offset="100%" stopColor={T.sage}/>
-          </linearGradient>
-        </defs>
         <path d="M 18 80 A 56 56 0 0 1 142 80" fill="none" stroke={T.light} strokeWidth={12} strokeLinecap="round"/>
-        <path d="M 18 80 A 56 56 0 0 1 142 80" fill="none" stroke={lv.color} strokeWidth={12}
-          strokeDasharray={`${dash} ${circumference}`} strokeLinecap="round"
-          style={{ transition:"stroke-dasharray 1.5s ease", filter:`drop-shadow(0 0 8px ${lv.color}60)` }}/>
+        <path d="M 18 80 A 56 56 0 0 1 142 80" fill="none" stroke={lv.color} strokeWidth={12} strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{ transition:"stroke-dasharray 1.5s ease", filter:`drop-shadow(0 0 8px ${lv.color}60)` }}/>
         <text x={80} y={72} textAnchor="middle" fill={T.ink} style={{ fontSize:26, fontWeight:700, fontFamily:"'Playfair Display',serif" }}>{score.toFixed(1)}</text>
         <text x={80} y={88} textAnchor="middle" fill={T.muted} style={{ fontSize:9, fontFamily:"'DM Mono',monospace", letterSpacing:1 }}>OUT OF 5.0</text>
       </svg>
@@ -510,8 +414,7 @@ function ScoreGauge({ score }) {
 }
 
 function DimensionBar({ cat, score, index }) {
-  const lv = getLevel(score);
-  const pct = ((score-1)/4)*100;
+  const lv = getLevel(score); const pct = ((score-1)/4)*100;
   const [animated, setAnimated] = useState(false);
   useEffect(()=>{ const t=setTimeout(()=>setAnimated(true),index*60+400); return()=>clearTimeout(t); },[]);
   return (
@@ -521,21 +424,6 @@ function DimensionBar({ cat, score, index }) {
         <div style={{ height:"100%", width:animated?`${pct}%`:"0%", borderRadius:4, background:lv.color, transition:"width .8s ease", boxShadow:`0 0 4px ${lv.color}60` }}/>
       </div>
       <div style={{ fontSize:12, fontWeight:700, color:lv.color, fontFamily:"'DM Mono',monospace", textAlign:"right" }}>{score}.0</div>
-    </div>
-  );
-}
-
-function InsightBlock({ section, body, accent, index }) {
-  const isRisk = body.toLowerCase().includes("risk") || body.toLowerCase().includes("gap") || body.toLowerCase().includes("low");
-  return (
-    <div style={{
-      background:T.white, borderRadius:12, padding:"28px 32px",
-      border:`1px solid ${T.border}`, borderLeft:`4px solid ${accent}`,
-      boxShadow:"0 2px 8px rgba(0,0,0,.04)", marginBottom:16,
-      animation:`fadeUp .5s ${index*.08}s ease both`,
-    }}>
-      <h4 className="serif" style={{ fontSize:17, fontWeight:700, color:T.ink, marginBottom:12, lineHeight:1.3 }}>{section}</h4>
-      <div style={{ fontSize:14, color:T.mid, lineHeight:1.85, whiteSpace:"pre-wrap" }}>{body}</div>
     </div>
   );
 }
@@ -551,27 +439,21 @@ function ReportScreen({ data, onRestart, onOther }) {
   const scored = questions.map(q=>({...q,score:answers[q.id]||0}));
   const weakest = [...scored].sort((a,b)=>a.score-b.score).slice(0,3);
   const strongest = [...scored].sort((a,b)=>b.score-a.score).slice(0,3);
-
-  // Parse AI sections
   const rawSections = aiText.split(/\n(?=##\s)/).filter(Boolean);
-  const sections = rawSections.map(s=>{
-    const lines = s.split("\n");
-    return { heading:lines[0].replace(/^#+\s*/,"").trim(), body:lines.slice(1).join("\n").trim() };
-  }).filter(s=>s.heading&&s.body);
+  const sections = rawSections.map(s=>{ const lines=s.split("\n"); return { heading:lines[0].replace(/^#+\s*/,"").trim(), body:lines.slice(1).join("\n").trim() }; }).filter(s=>s.heading&&s.body);
 
   return (
     <div style={{ maxWidth:800, margin:"0 auto", padding:"48px 24px 80px" }}>
       <Steps current={3}/>
 
-      {/* Cover Header */}
+      {/* Cover */}
       <div style={{ background:`linear-gradient(135deg,${T.forest} 0%,#0A1F14 100%)`, borderRadius:16, padding:"40px 44px 36px", marginBottom:28, position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:-50, right:-50, width:220, height:220, borderRadius:"50%", background:"rgba(255,255,255,.03)" }}/>
-        <div style={{ position:"absolute", bottom:-30, left:-30, width:160, height:160, borderRadius:"50%", background:"rgba(255,255,255,.02)" }}/>
         <div style={{ position:"relative", zIndex:1 }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28, flexWrap:"wrap", gap:12 }}>
             <div>
               <div className="serif" style={{ fontSize:22, fontWeight:700, color:T.white }}>Ado<span style={{ color:"#D4A843" }}>vio</span></div>
-              <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", letterSpacing:2 }}>CHANGE INTELLIGENCE PLATFORM</div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", letterSpacing:2, marginTop:2 }}>CHANGE INTELLIGENCE PLATFORM</div>
             </div>
             <div style={{ textAlign:"right" }}>
               <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", letterSpacing:1, marginBottom:2 }}>CONFIDENTIAL REPORT</div>
@@ -581,18 +463,18 @@ function ReportScreen({ data, onRestart, onOther }) {
           <Badge color={T.lime} bg="rgba(255,255,255,.12)">{isChange?"Change Readiness Assessment":"AI Adoption Readiness Assessment"}</Badge>
           <h1 className="serif" style={{ fontSize:"clamp(24px,4vw,36px)", fontWeight:700, marginTop:14, marginBottom:6, letterSpacing:-.5, color:T.white }}>{context.orgName}</h1>
           <p style={{ color:"rgba(255,255,255,.5)", fontSize:12 }}>Prepared for {respondent.name} · {respondent.email} · {formatDate()}</p>
-          {context.changeDesc && <p style={{ color:"rgba(255,255,255,.45)", fontSize:12, marginTop:8, fontStyle:"italic", maxWidth:500 }}>"{context.changeDesc}"</p>}
-          {(context.industry||context.size) && (
+          {context.changeDesc&&<p style={{ color:"rgba(255,255,255,.4)", fontSize:12, marginTop:8, fontStyle:"italic", maxWidth:500 }}>"{context.changeDesc}"</p>}
+          {(context.industry||context.size)&&(
             <div style={{ marginTop:16, display:"flex", gap:10, flexWrap:"wrap" }}>
-              {context.industry && <span style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.7)" }}>{context.industry}</span>}
-              {context.size && <span style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.7)" }}>{context.size} employees</span>}
+              {context.industry&&<span style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.7)" }}>{context.industry}</span>}
+              {context.size&&<span style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.7)" }}>{context.size} employees</span>}
               <span style={{ fontSize:11, padding:"3px 10px", borderRadius:100, background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.7)" }}>{respondent.role}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Score Card */}
+      {/* Score */}
       <div style={{ background:T.white, borderRadius:12, border:`1px solid ${T.border}`, padding:"36px", marginBottom:24, display:"grid", gridTemplateColumns:"auto 1fr", gap:32, alignItems:"center", boxShadow:"0 2px 12px rgba(0,0,0,.05)" }}>
         <ScoreGauge score={overall}/>
         <div>
@@ -602,24 +484,20 @@ function ReportScreen({ data, onRestart, onOther }) {
           <div style={{ marginTop:16, display:"flex", gap:8, flexWrap:"wrap" }}>
             {[[lv.label,"readiness level"],[`${questions.length} dimensions`,"assessed"],[`${scored.filter(q=>q.score>=4).length} strengths`,"identified"],[`${scored.filter(q=>q.score<3).length} risks`,"flagged"]].map(([v,l])=>(
               <div key={l} style={{ padding:"6px 12px", borderRadius:8, background:T.off, border:`1px solid ${T.border}` }}>
-                <span style={{ fontWeight:600, fontSize:13 }}>{v}</span>
-                <span style={{ color:T.muted, fontSize:12 }}> {l}</span>
+                <span style={{ fontWeight:600, fontSize:13 }}>{v}</span><span style={{ color:T.muted, fontSize:12 }}> {l}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Dimension Breakdown */}
+      {/* Dimensions */}
       <div style={{ background:T.white, borderRadius:12, border:`1px solid ${T.border}`, padding:"32px", marginBottom:24, boxShadow:"0 2px 12px rgba(0,0,0,.05)" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24, flexWrap:"wrap", gap:12 }}>
           <h3 className="serif" style={{ fontSize:20, fontWeight:700, letterSpacing:-.2 }}>Dimension Breakdown</h3>
           <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
             {[[T.red,"Critical"],[T.amber,"At Risk"],[T.gold,"Moderate"],[T.sage,"Strong"]].map(([c,l])=>(
-              <div key={l} style={{ display:"flex", alignItems:"center", gap:5 }}>
-                <div style={{ width:8, height:8, borderRadius:2, background:c }}/>
-                <span style={{ fontSize:10, color:T.muted }}>{l}</span>
-              </div>
+              <div key={l} style={{ display:"flex", alignItems:"center", gap:5 }}><div style={{ width:8, height:8, borderRadius:2, background:c }}/><span style={{ fontSize:10, color:T.muted }}>{l}</span></div>
             ))}
           </div>
         </div>
@@ -628,7 +506,7 @@ function ReportScreen({ data, onRestart, onOther }) {
 
       {/* Strengths & Risks */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
-        {[["✅ Top Strengths",strongest,T.sage,T.lime,"Leverage these as anchors."],["⚠️ Priority Risks",weakest,T.amber,T.amberL,"Address these urgently."]].map(([heading,items,color,bg,sub])=>(
+        {[["✅ Top Strengths",strongest,T.sage,T.lime,"Leverage as anchors."],["⚠️ Priority Risks",weakest,T.amber,T.amberL,"Address urgently."]].map(([heading,items,color,bg,sub])=>(
           <div key={heading} style={{ background:T.white, borderRadius:12, border:`1px solid ${T.border}`, padding:"24px", boxShadow:"0 2px 12px rgba(0,0,0,.05)", borderTop:`3px solid ${color}` }}>
             <div style={{ fontWeight:700, fontSize:13, color, marginBottom:3 }}>{heading}</div>
             <div style={{ fontSize:11, color:T.muted, marginBottom:14 }}>{sub}</div>
@@ -648,47 +526,32 @@ function ReportScreen({ data, onRestart, onOther }) {
           <h3 className="serif" style={{ fontSize:22, fontWeight:700, letterSpacing:-.2 }}>AI Analysis & Recommendations</h3>
           <Badge color={accent} bg={accentBg}>AI Generated</Badge>
         </div>
-        <p style={{ fontSize:13, color:T.mid, marginBottom:24, lineHeight:1.6 }}>
-          Each section below is tailored to your specific scores, industry, and initiative — not generic advice.
-        </p>
+        <p style={{ fontSize:13, color:T.mid, marginBottom:24, lineHeight:1.6 }}>Each section is tailored to your specific scores, industry, and initiative — not generic advice.</p>
         {sections.length>0 ? sections.map((s,i)=>(
-          <InsightBlock key={i} section={s.heading} body={s.body} accent={accent} index={i}/>
+          <div key={i} style={{ background:T.white, borderRadius:12, padding:"28px 32px", border:`1px solid ${T.border}`, borderLeft:`4px solid ${accent}`, boxShadow:"0 2px 8px rgba(0,0,0,.04)", marginBottom:16, animation:`fadeUp .5s ${i*.08}s ease both` }}>
+            <h4 className="serif" style={{ fontSize:17, fontWeight:700, color:T.ink, marginBottom:12 }}>{s.heading}</h4>
+            <div style={{ fontSize:14, color:T.mid, lineHeight:1.85, whiteSpace:"pre-wrap" }}>{s.body}</div>
+          </div>
         )) : (
-          <InsightBlock section="Analysis" body={aiText} accent={accent} index={0}/>
+          <div style={{ background:T.white, borderRadius:12, padding:"28px 32px", border:`1px solid ${T.border}`, borderLeft:`4px solid ${accent}` }}>
+            <div style={{ fontSize:14, color:T.mid, lineHeight:1.85, whiteSpace:"pre-wrap" }}>{aiText}</div>
+          </div>
         )}
       </div>
 
-      {/* Email Confirmation */}
-      <div style={{ background:T.lime, borderRadius:12, border:`1px solid ${T.forest}30`, padding:"22px 28px", marginBottom:32, display:"flex", gap:14, alignItems:"center" }}>
-        <div style={{ fontSize:24 }}>✉️</div>
-        <div>
-          <div style={{ fontWeight:600, fontSize:14, color:T.forest, marginBottom:2 }}>Report saved</div>
-          <div style={{ fontSize:13, color:T.mid }}>A copy will be sent to <strong>{respondent?.email}</strong></div>
-        </div>
-      </div>
-
       {/* LinkedIn CTA */}
-      <div style={{ background:`linear-gradient(135deg,${T.forest}08,${T.sage}08)`, borderRadius:12, border:`1px solid ${T.sage}40`, padding:"28px 32px", marginBottom:32, display:"flex", gap:20, alignItems:"center", flexWrap:"wrap" }}>
+      <div style={{ background:`linear-gradient(135deg,${T.forest}08,${T.sage}08)`, borderRadius:12, border:`1px solid ${T.sage}40`, padding:"28px 32px", marginBottom:24, display:"flex", gap:20, alignItems:"center", flexWrap:"wrap" }}>
         <div style={{ fontSize:32 }}>💼</div>
         <div style={{ flex:1 }}>
-          <div className="serif" style={{ fontSize:16, fontWeight:700, color:T.forest, marginBottom:4 }}>Found this useful?</div>
-          <p style={{ fontSize:13, color:T.mid, lineHeight:1.6 }}>
-            Connect on LinkedIn for weekly insights on change management, AI adoption, and organisational transformation.
-          </p>
+          <div className="serif" style={{ fontSize:16, fontWeight:700, color:T.forest, marginBottom:4 }}>Found this report valuable?</div>
+          <p style={{ fontSize:13, color:T.mid, lineHeight:1.6 }}>Connect on LinkedIn for weekly insights on change management, AI adoption, and organisational transformation.</p>
         </div>
-        <a href="https://www.linkedin.com/in/divyamkaushik/" target="_blank" rel="noreferrer" style={{
-          display:"inline-flex", alignItems:"center", gap:6, padding:"10px 20px",
-          borderRadius:8, background:T.forest, color:T.white, fontSize:13, fontWeight:600,
-          textDecoration:"none", transition:"all .2s", whiteSpace:"nowrap",
-          boxShadow:"0 2px 8px rgba(27,67,50,.25)",
-        }}>Connect on LinkedIn →</a>
+        <a href="https://linkedin.com/in/yourprofile" target="_blank" rel="noreferrer" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"10px 20px", borderRadius:8, background:T.forest, color:T.white, fontSize:13, fontWeight:600, textDecoration:"none", transition:"all .2s", whiteSpace:"nowrap", boxShadow:"0 2px 8px rgba(27,67,50,.25)" }}>Connect on LinkedIn →</a>
       </div>
 
-      {/* CTA */}
+      {/* Next Assessment */}
       <div style={{ background:T.white, borderRadius:12, border:`1px solid ${T.border}`, padding:"36px", textAlign:"center", boxShadow:"0 2px 12px rgba(0,0,0,.05)" }}>
-        <h3 className="serif" style={{ fontSize:20, fontWeight:700, marginBottom:8 }}>
-          {isChange?"Also assess your AI Adoption Readiness":"Also assess your Change Readiness"}
-        </h3>
+        <h3 className="serif" style={{ fontSize:20, fontWeight:700, marginBottom:8 }}>{isChange?"Also assess your AI Adoption Readiness":"Also assess your Change Readiness"}</h3>
         <p style={{ color:T.mid, fontSize:14, marginBottom:24 }}>Get the complete picture of your organisation's transformation readiness.</p>
         <div style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
           <PrimaryBtn onClick={onOther}>{isChange?"AI Adoption Readiness →":"Change Readiness →"}</PrimaryBtn>
@@ -708,7 +571,6 @@ function ReportScreen({ data, onRestart, onOther }) {
   );
 }
 
-// ── Main App ───────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen]         = useState("home");
   const [type, setType]             = useState(null);
@@ -739,33 +601,37 @@ export default function App() {
     const { system, user } = buildPrompt(type, context, answers, questions, overall, lv);
 
     try {
-      const apiKey = getApiKey();
-      const headers = { "Content-Type":"application/json" };
+      const response = await fetch("/api/generate", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1500,
+          system,
+          messages:[{ role:"user", content:user }]
+        }),
+      });
 
-      // Use proxy in production, direct in preview
-      const useProxy = apiKey === "" || window.location.hostname !== "localhost";
-      let res;
+      const raw = await response.text();
+      console.log("Raw API response:", raw);
 
-      if (useProxy) {
-        res = await fetch("/api/generate", {
-          method:"POST", headers,
-          body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1500, system, messages:[{ role:"user", content:user }] }),
-        });
-      } else {
-        headers["x-api-key"] = apiKey;
-        headers["anthropic-version"] = "2023-06-01";
-        headers["anthropic-dangerous-direct-browser-access"] = "true";
-        res = await fetch("https://api.anthropic.com/v1/messages", {
-          method:"POST", headers,
-          body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1500, system, messages:[{ role:"user", content:user }] }),
-        });
-      }
+      let d;
+      try { d = JSON.parse(raw); }
+      catch(e) { throw new Error("Invalid JSON response: " + raw.substring(0,200)); }
 
-      const d = await res.json();
-      const aiText = d.content?.[0]?.text || "Unable to generate report. Please try again.";
+      console.log("Parsed response:", JSON.stringify(d).substring(0,300));
+
+      const aiText =
+        d?.content?.[0]?.text ||
+        d?.content?.[0]?.value ||
+        d?.completion ||
+        (d?.error ? `API Error: ${typeof d.error === "object" ? d.error.message : d.error}` : null) ||
+        `Raw response: ${raw.substring(0,500)}`;
+
       setReportData({ answers, context, respondent:{ name, email, role:context.role }, type, aiText });
     } catch(err) {
-      setReportData({ answers, context, respondent:{ name, email, role:context.role }, type, aiText:"Error generating report. Please check your connection and try again." });
+      console.error("Generation error:", err);
+      setReportData({ answers, context, respondent:{ name, email, role:context.role }, type, aiText:`Error: ${err.message}` });
     }
     setScreen("report"); window.scrollTo(0,0);
   };
@@ -773,14 +639,9 @@ export default function App() {
   return (
     <div style={{ minHeight:"100vh", background:T.off }}>
       <nav style={{ position:"sticky", top:0, zIndex:100, background:`${T.white}F0`, backdropFilter:"blur(10px)", borderBottom:`1px solid ${T.border}`, padding:"0 28px", height:60, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <button onClick={()=>{ setScreen("home"); window.scrollTo(0,0); }} className="serif" style={{ fontSize:20, fontWeight:700, color:T.forest, letterSpacing:-.3 }}>
-          Ado<span style={{ color:T.gold }}>vio</span>
-        </button>
+        <button onClick={()=>{ setScreen("home"); window.scrollTo(0,0); }} className="serif" style={{ fontSize:20, fontWeight:700, color:T.forest, letterSpacing:-.3 }}>Ado<span style={{ color:T.gold }}>vio</span></button>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-          <button onClick={()=>resetFor("change")} style={{ padding:"7px 16px", borderRadius:6, fontSize:13, fontWeight:500, color:T.forest, background:"transparent", border:"none", transition:"background .15s" }}
-            onMouseEnter={e=>e.currentTarget.style.background=T.lime}
-            onMouseLeave={e=>e.currentTarget.style.background="transparent"}
-          >Change Readiness</button>
+          <button onClick={()=>resetFor("change")} style={{ padding:"7px 16px", borderRadius:6, fontSize:13, fontWeight:500, color:T.forest, background:"transparent", border:"none", transition:"background .15s" }} onMouseEnter={e=>e.currentTarget.style.background=T.lime} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Change Readiness</button>
           <PrimaryBtn small onClick={()=>resetFor("ai")}>AI Readiness</PrimaryBtn>
         </div>
       </nav>
