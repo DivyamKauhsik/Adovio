@@ -676,7 +676,7 @@ function ReportScreen({ data, onRestart, onOther }) {
             Connect on LinkedIn for weekly insights on change management, AI adoption, and organisational transformation.
           </p>
         </div>
-        <a href="https://linkedin.com/in/yourprofile" target="_blank" rel="noreferrer" style={{
+        <a href="https://www.linkedin.com/in/divyamkaushik/" target="_blank" rel="noreferrer" style={{
           display:"inline-flex", alignItems:"center", gap:6, padding:"10px 20px",
           borderRadius:8, background:T.forest, color:T.white, fontSize:13, fontWeight:600,
           textDecoration:"none", transition:"all .2s", whiteSpace:"nowrap",
