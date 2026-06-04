@@ -192,7 +192,7 @@ export default async function handler(req, res) {
 
   try {
     const emailPayload = {
-      from: "Adovio Reports <onboarding@resend.dev>",
+      from: "Adovio Reports <reports@adovio.io>",
       to: [to],
       subject: `Your ${title} — ${orgName}`,
       html: emailHtml,
