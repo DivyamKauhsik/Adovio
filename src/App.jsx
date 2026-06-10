@@ -17,29 +17,29 @@ const T = {
 
 /* ── Questions ──────────────────────────────────────────────── */
 const CHANGE_Qs = [
-  { id:"c1",  cat:"Leadership",    text:"Leadership actively champions this change with visible commitment and clear messaging." },
-  { id:"c2",  cat:"Communication", text:"Employees understand WHY this change is happening and what it means for them personally." },
-  { id:"c3",  cat:"Planning",      text:"There is a dedicated change management plan with defined roles and responsibilities." },
-  { id:"c4",  cat:"History",       text:"This organisation has successfully navigated large-scale change in the past three years." },
-  { id:"c5",  cat:"Engagement",    text:"Stakeholders most affected by this change have been meaningfully involved in shaping it." },
-  { id:"c6",  cat:"Resources",     text:"Sufficient resources — time, budget, and people — are allocated to manage this change." },
-  { id:"c7",  cat:"Resistance",    text:"Resistance signals are being actively monitored and addressed before they escalate." },
-  { id:"c8",  cat:"Capability",    text:"Training and support are planned for people who need to work in new ways." },
-  { id:"c9",  cat:"Measurement",   text:"Success metrics for this change initiative are clearly defined and measurable." },
-  { id:"c10", cat:"Capacity",      text:"The pace of this change is realistic given current organisational workload and capacity." },
+  { id:"c1",  cat:"Leadership",    text:"Senior leaders are personally visible in this change — speaking about it, showing up, modelling it — not just approving the budget." },
+  { id:"c2",  cat:"Communication", text:"If you stopped five random employees today, they could explain why this change is happening and what it means for them." },
+  { id:"c3",  cat:"Planning",      text:"A dedicated change plan exists — with named owners and milestones that go beyond the technical go-live." },
+  { id:"c4",  cat:"History",       text:"The last major change here is remembered as a success — people trust this organisation can land change well." },
+  { id:"c5",  cat:"Engagement",    text:"The people most affected by this change helped shape it — they're not just hearing about it after decisions are made." },
+  { id:"c6",  cat:"Resources",     text:"This change has real resources behind it — budget, people, and time — not just goodwill and side-of-desk effort." },
+  { id:"c7",  cat:"Resistance",    text:"We actively look for resistance signals and act on them early — rather than discovering them at go-live." },
+  { id:"c8",  cat:"Capability",    text:"Everyone who must work differently will get the training and support to do it confidently — before go-live, not after." },
+  { id:"c9",  cat:"Measurement",   text:"We've defined what success looks like in adoption terms — not just delivery milestones." },
+  { id:"c10", cat:"Capacity",      text:"People genuinely have the bandwidth to absorb this change on top of their day jobs." },
 ];
 
 const AI_Qs = [
-  { id:"a1",  cat:"Leadership",        text:"Senior leadership has a clear, communicated strategic vision for how AI will be used in this organisation." },
-  { id:"a2",  cat:"Communication",     text:"Employees have received honest, transparent communication about AI's impact on their roles." },
-  { id:"a3",  cat:"Capability",        text:"There is a structured plan to upskill employees to work effectively alongside AI tools." },
-  { id:"a4",  cat:"Ethics & Trust",    text:"Data privacy, security, and ethical concerns around AI use have been openly addressed." },
-  { id:"a5",  cat:"Culture",           text:"Employees feel psychologically safe to raise questions, concerns, and fears about AI." },
-  { id:"a6",  cat:"Change Approach",   text:"Change management principles are explicitly applied to AI rollout — not just technical deployment." },
-  { id:"a7",  cat:"Measurement",       text:"There is a process to measure employee adoption and sentiment throughout the AI rollout." },
-  { id:"a8",  cat:"Momentum",          text:"Early AI wins have been identified, communicated, and celebrated to build trust and momentum." },
-  { id:"a9",  cat:"Manager Readiness", text:"Managers are equipped and confident to lead their teams through AI-related uncertainty." },
-  { id:"a10", cat:"Narrative",         text:"The organisation clearly distinguishes AI replacing tasks versus replacing people — and communicates this consistently." },
+  { id:"a1",  cat:"Leadership",        text:"Senior leaders can articulate a clear vision for AI here — beyond \"we need to use AI.\"" },
+  { id:"a2",  cat:"Communication",     text:"Employees have heard honest, direct answers about how AI will affect their roles — not vague reassurances." },
+  { id:"a3",  cat:"Capability",        text:"There's a real plan to upskill people to work alongside AI — with time and resources committed to it." },
+  { id:"a4",  cat:"Ethics & Trust",    text:"Data privacy, security, and ethical concerns about AI have been addressed openly — not buried in policy documents." },
+  { id:"a5",  cat:"Culture",           text:"People feel safe saying \"I'm worried about AI\" out loud — without fear of looking resistant or replaceable." },
+  { id:"a6",  cat:"Change Approach",   text:"AI rollout here is treated as a people change, not just a technology deployment." },
+  { id:"a7",  cat:"Measurement",       text:"We measure whether people actually use AI and how they feel about it — not just licenses deployed." },
+  { id:"a8",  cat:"Momentum",          text:"Early AI wins are being found, shared, and celebrated — building belief instead of fear." },
+  { id:"a9",  cat:"Manager Readiness", text:"Managers can confidently answer their teams' hardest question: \"what does AI mean for me?\"" },
+  { id:"a10", cat:"Narrative",         text:"There's a clear, consistent message on what AI will and won't replace — and people believe it." },
 ];
 
 const SCALE = [
@@ -161,6 +161,17 @@ const CSS = `
   button{cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif}
 
   .hero-card { animation: floaty 7s ease-in-out infinite; }
+
+  /* ── Rating slider ── */
+  .rate-slider { -webkit-appearance:none; appearance:none; width:100%; height:44px; background:transparent; cursor:grab; touch-action:pan-y; }
+  .rate-slider:active { cursor:grabbing; }
+  .rate-slider::-webkit-slider-runnable-track { height:12px; border-radius:6px; background:var(--track, ${T.light}); border:1px solid ${T.border}; }
+  .rate-slider::-moz-range-track { height:12px; border-radius:6px; background:var(--track, ${T.light}); border:1px solid ${T.border}; }
+  .rate-slider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:30px; height:30px; border-radius:50%; background:var(--thumb, ${T.muted}); border:3px solid white; box-shadow:0 2px 10px rgba(0,0,0,.25); margin-top:-10px; transition:transform .15s, background .2s; }
+  .rate-slider::-moz-range-thumb { width:30px; height:30px; border-radius:50%; background:var(--thumb, ${T.muted}); border:3px solid white; box-shadow:0 2px 10px rgba(0,0,0,.25); transition:transform .15s, background .2s; }
+  .rate-slider:hover::-webkit-slider-thumb { transform:scale(1.12); }
+  .rate-slider:focus-visible { outline:2px solid ${T.forest}; outline-offset:4px; border-radius:8px; }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
     .hero-card { animation:none; }
@@ -591,6 +602,53 @@ function ContextStep({ type, context, setContext, onNext, onBack }) {
   );
 }
 
+/* ── Slider question ────────────────────────────────────────── */
+function SliderQuestion({ q, index, value, onChange, accent, isLast }) {
+  const answered = value !== undefined;
+  const display = answered ? value : 3;
+  const color = answered ? scoreColor(display) : T.muted;
+  const pct = ((display - 1) / 4) * 100;
+  const track = answered
+    ? `linear-gradient(90deg, ${color} 0%, ${color} ${pct}%, ${T.light} ${pct}%)`
+    : T.light;
+  const labels = ["Strongly Disagree","Disagree","Neutral","Agree","Strongly Agree"];
+
+  return (
+    <div style={{ padding:"26px 0", borderBottom:!isLast?`1px solid ${T.border}`:"none", animation:`fadeUp .4s ${index*.04}s both` }}>
+      <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:12 }}>
+        <span style={{ width:24, height:24, borderRadius:"50%", background:answered?accent:T.light, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:answered?T.white:T.muted, flexShrink:0, transition:"all .2s" }}>{answered?"✓":index+1}</span>
+        <Badge color={T.mid} bg={T.off}>{q.cat}</Badge>
+        {answered && <span style={{ marginLeft:"auto", fontSize:12, fontWeight:700, color, transition:"color .2s" }}>{labels[display-1]}</span>}
+      </div>
+      <p style={{ fontSize:14.5, lineHeight:1.7, color:T.body, marginBottom:14, paddingLeft:34 }}>{q.text}</p>
+
+      <div style={{ paddingLeft:34 }}>
+        <input
+          type="range" min={1} max={5} step={1}
+          value={display}
+          onChange={e=>onChange(parseInt(e.target.value))}
+          onMouseDown={()=>{ if(!answered) onChange(3); }}
+          onTouchStart={()=>{ if(!answered) onChange(3); }}
+          className="rate-slider"
+          style={{ "--track":track, "--thumb":color }}
+          aria-label={`${q.cat}: ${q.text}`}
+        />
+        <div style={{ display:"flex", justifyContent:"space-between", marginTop:2 }}>
+          {[1,2,3,4,5].map(v=>(
+            <button key={v} onClick={()=>onChange(v)} style={{
+              width:34, textAlign:v===1?"left":v===5?"right":"center",
+              fontSize:11, fontWeight:answered&&display===v?800:500,
+              color:answered&&display===v?color:T.muted,
+              transition:"all .15s", padding:"4px 0",
+            }}>{v}</button>
+          ))}
+        </div>
+        {!answered && <div style={{ fontSize:11.5, color:T.muted, marginTop:2, display:"flex", alignItems:"center", gap:6 }}><span style={{fontSize:13}}>👆</span> Drag the slider or tap a number</div>}
+      </div>
+    </div>
+  );
+}
+
 /* ── Questions step ─────────────────────────────────────────── */
 function QuestionsStep({ type, answers, setAnswers, onNext, onBack }) {
   const questions = type==="change"?CHANGE_Qs:AI_Qs;
@@ -603,37 +661,19 @@ function QuestionsStep({ type, answers, setAnswers, onNext, onBack }) {
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:10, marginBottom:18 }}>
         <div>
           <Badge color={accent} bg={type==="change"?T.lime:T.blueL}>{type==="change"?"Change Readiness":"AI Adoption Readiness"}</Badge>
-          <h2 className="serif" style={{ fontSize:29, fontWeight:700, margin:"12px 0 2px", letterSpacing:-.4 }}>Rate each statement</h2>
+          <h2 className="serif" style={{ fontSize:29, fontWeight:700, margin:"12px 0 2px", letterSpacing:-.4 }}>Slide to rate each statement</h2>
+          <p style={{ color:T.mid, fontSize:13, marginTop:4 }}>Go with your gut — your first instinct is usually the most accurate signal.</p>
         </div>
         <span className="mono" style={{ fontSize:13, color:accent, fontWeight:600 }}>{answered}/{questions.length}</span>
       </div>
       <div style={{ height:7, background:T.border, borderRadius:4, marginBottom:38, overflow:"hidden" }}>
         <div style={{ height:"100%", width:`${(answered/questions.length)*100}%`, borderRadius:4, background:`linear-gradient(90deg,${accent},${T.sage})`, transition:"width .35s cubic-bezier(.22,1,.36,1)" }}/>
       </div>
-      {questions.map((q,i)=>{
-        const sel=answers[q.id];
-        return (
-          <div key={q.id} style={{ padding:"26px 0", borderBottom:i<questions.length-1?`1px solid ${T.border}`:"none", animation:`fadeUp .4s ${i*.04}s both` }}>
-            <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:12 }}>
-              <span style={{ width:24, height:24, borderRadius:"50%", background:sel?accent:T.light, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:sel?T.white:T.muted, flexShrink:0, transition:"all .2s" }}>{sel?"✓":i+1}</span>
-              <Badge color={T.mid} bg={T.off}>{q.cat}</Badge>
-            </div>
-            <p style={{ fontSize:14.5, lineHeight:1.7, color:T.body, marginBottom:16, paddingLeft:34 }}>{q.text}</p>
-            <div style={{ display:"flex", gap:7, flexWrap:"wrap", paddingLeft:34, alignItems:"center" }}>
-              {SCALE.map(s=>{
-                const active=sel===s.v;
-                return (
-                  <button key={s.v} onClick={()=>setAnswers(a=>({...a,[q.id]:s.v}))} style={{ width:44, height:38, borderRadius:8, fontSize:13, fontWeight:700, background:active?accent:T.white, color:active?T.white:T.mid, border:`1.5px solid ${active?accent:T.border}`, transition:"all .18s", boxShadow:active?`0 3px 10px ${accent}40`:"none" }}
-                    onMouseEnter={e=>{if(!active){e.currentTarget.style.borderColor=accent;e.currentTarget.style.color=accent;e.currentTarget.style.transform="translateY(-2px)";}}}
-                    onMouseLeave={e=>{if(!active){e.currentTarget.style.borderColor=T.border;e.currentTarget.style.color=T.mid;e.currentTarget.style.transform="translateY(0)";}}}
-                  >{s.v}</button>
-                );
-              })}
-              <span style={{ fontSize:11.5, color:sel?accent:T.muted, marginLeft:6, fontWeight:sel?600:400 }}>{sel?SCALE.find(s=>s.v===sel)?.label:"1 = Strongly Disagree · 5 = Strongly Agree"}</span>
-            </div>
-          </div>
-        );
-      })}
+      {questions.map((q,i)=>(
+        <SliderQuestion key={q.id} q={q} index={i} isLast={i===questions.length-1}
+          value={answers[q.id]} accent={accent}
+          onChange={v=>setAnswers(a=>({...a,[q.id]:v}))}/>
+      ))}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:42 }}>
         <OutlineBtn onClick={onBack}>← Back</OutlineBtn>
         <PrimaryBtn onClick={onNext} disabled={!allDone} glow={allDone}>{allDone?"Continue — almost done →":`${questions.length-answered} remaining`}</PrimaryBtn>
