@@ -1,60 +1,75 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
-/* ────────────────────────────────────────────────────────────────
-   ADOVIO v2 — Change Intelligence Platform
-   Conversion-focused redesign: show the reward before the ask.
-──────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────
+   ADOVIO v3 — McKinsey Design Language
+   Sharp · Authoritative · Data-forward · Zero emoji
+───────────────────────────────────────────────────────────── */
 
 const T = {
-  white:"#FFFFFF", off:"#F8F7F4", light:"#EEECEA", border:"#DDD9D0",
-  muted:"#9E9A92", mid:"#6B6760", body:"#2E2C29", ink:"#141311",
-  forest:"#1B4332", deep:"#0A1F14", sage:"#40916C", mint:"#95D5B2", lime:"#D8F3DC",
-  gold:"#D4A843", goldD:"#B5883A", goldL:"#FDF3DC",
-  red:"#C0392B", redL:"#FDECEA",
-  amber:"#C0580A", amberL:"#FEF0E6",
-  blue:"#1A5276", blueL:"#EAF2F8",
+  // Neutrals
+  white:   "#FFFFFF",
+  paper:   "#FAFAF9",
+  smoke:   "#F4F3F1",
+  rule:    "#E5E4E0",
+  border:  "#D1CFC9",
+  muted:   "#9B9890",
+  mid:     "#6B6860",
+  body:    "#2C2B28",
+  ink:     "#111110",
+  // Charcoal primary
+  char:    "#1A1917",
+  charMid: "#2E2C28",
+  charL:   "#3D3B36",
+  // Accent — restrained forest
+  forest:  "#1B4332",
+  sage:    "#2D6A4F",
+  mint:    "#52B788",
+  teal:    "#1A3C34",
+  // Data colours (for score bands)
+  red:     "#B91C1C",
+  amber:   "#B45309",
+  gold:    "#92400E",
+  green:   "#166534",
+  // Light versions
+  redL:    "#FEF2F2",
+  amberL:  "#FFFBEB",
+  goldL:   "#FEF3C7",
+  greenL:  "#F0FDF4",
 };
 
-/* ── Questions ──────────────────────────────────────────────── */
+/* ── Questions ─────────────────────────────────────────────── */
 const CHANGE_Qs = [
   { id:"c1",  cat:"Leadership",    text:"Senior leaders are personally visible in this change — speaking about it, showing up, modelling it — not just approving the budget." },
   { id:"c2",  cat:"Communication", text:"If you stopped five random employees today, they could explain why this change is happening and what it means for them." },
   { id:"c3",  cat:"Planning",      text:"A dedicated change plan exists — with named owners and milestones that go beyond the technical go-live." },
   { id:"c4",  cat:"History",       text:"The last major change here is remembered as a success — people trust this organisation can land change well." },
-  { id:"c5",  cat:"Engagement",    text:"The people most affected by this change helped shape it — they're not just hearing about it after decisions are made." },
+  { id:"c5",  cat:"Engagement",    text:"The people most affected by this change helped shape it — they are not just hearing about decisions after they are made." },
   { id:"c6",  cat:"Resources",     text:"This change has real resources behind it — budget, people, and time — not just goodwill and side-of-desk effort." },
   { id:"c7",  cat:"Resistance",    text:"We actively look for resistance signals and act on them early — rather than discovering them at go-live." },
   { id:"c8",  cat:"Capability",    text:"Everyone who must work differently will get the training and support to do it confidently — before go-live, not after." },
-  { id:"c9",  cat:"Measurement",   text:"We've defined what success looks like in adoption terms — not just delivery milestones." },
+  { id:"c9",  cat:"Measurement",   text:"We have defined what success looks like in adoption terms — not just delivery milestones." },
   { id:"c10", cat:"Capacity",      text:"People genuinely have the bandwidth to absorb this change on top of their day jobs." },
 ];
 
 const AI_Qs = [
-  { id:"a1",  cat:"Leadership",        text:"Senior leaders can articulate a clear vision for AI here — beyond \"we need to use AI.\"" },
+  { id:"a1",  cat:"Leadership",        text:"Senior leaders can articulate a clear vision for AI here — beyond 'we need to use AI.'" },
   { id:"a2",  cat:"Communication",     text:"Employees have heard honest, direct answers about how AI will affect their roles — not vague reassurances." },
-  { id:"a3",  cat:"Capability",        text:"There's a real plan to upskill people to work alongside AI — with time and resources committed to it." },
+  { id:"a3",  cat:"Capability",        text:"There is a real plan to upskill people to work alongside AI — with time and resources committed to it." },
   { id:"a4",  cat:"Ethics & Trust",    text:"Data privacy, security, and ethical concerns about AI have been addressed openly — not buried in policy documents." },
-  { id:"a5",  cat:"Culture",           text:"People feel safe saying \"I'm worried about AI\" out loud — without fear of looking resistant or replaceable." },
+  { id:"a5",  cat:"Culture",           text:"People feel safe saying 'I am worried about AI' out loud — without fear of looking resistant or replaceable." },
   { id:"a6",  cat:"Change Approach",   text:"AI rollout here is treated as a people change, not just a technology deployment." },
-  { id:"a7",  cat:"Measurement",       text:"We measure whether people actually use AI and how they feel about it — not just licenses deployed." },
+  { id:"a7",  cat:"Measurement",       text:"We measure whether people actually use AI and how they feel about it — not just licences deployed." },
   { id:"a8",  cat:"Momentum",          text:"Early AI wins are being found, shared, and celebrated — building belief instead of fear." },
-  { id:"a9",  cat:"Manager Readiness", text:"Managers can confidently answer their teams' hardest question: \"what does AI mean for me?\"" },
-  { id:"a10", cat:"Narrative",         text:"There's a clear, consistent message on what AI will and won't replace — and people believe it." },
+  { id:"a9",  cat:"Manager Readiness", text:"Managers can confidently answer their teams' hardest question: 'What does AI mean for me?'" },
+  { id:"a10", cat:"Narrative",         text:"There is a clear, consistent message on what AI will and will not replace — and people believe it." },
 ];
 
-const SCALE = [
-  { v:1, label:"Strongly Disagree" },
-  { v:2, label:"Disagree" },
-  { v:3, label:"Neutral" },
-  { v:4, label:"Agree" },
-  { v:5, label:"Strongly Agree" },
-];
-
-/* ── Sample report (homepage preview) ───────────────────────── */
+/* ── Sample ────────────────────────────────────────────────── */
 const SAMPLE = {
   org: "Meridian Financial Group",
-  initiative: "Core banking transformation — 2,400 employees, 3 business units, 18 months.",
+  type: "Change Readiness",
   overall: 3.1,
+  level: "Moderate",
   dims: [
     { cat:"Leadership",    score:2.5 },
     { cat:"Communication", score:3.0 },
@@ -67,333 +82,266 @@ const SAMPLE = {
     { cat:"Measurement",   score:3.5 },
     { cat:"Capacity",      score:2.5 },
   ],
-  excerpt: {
-    heading: "The Resistance Blind Spot",
-    body: "Your resistance score of 2.0 is the most urgent finding in this report. In financial services transformations of this scale, undetected resistance typically surfaces 6–9 months in — at exactly the point when rollback becomes costly. The 2022 CRM experience your team referenced has almost certainly left pockets of latent scepticism that will activate at go-live.",
-    action: "Within 30 days: establish a biweekly resistance pulse — 3 questions, anonymous, sent to all impacted staff. Assign a Change Champion in each business unit whose sole job is to surface resistance signals before they become blockers.",
-    benchmark: "Organisations with active resistance monitoring are 2.3x more likely to hit adoption targets within 6 months of go-live.",
+  finding: {
+    title: "Resistance Monitoring Gap",
+    body: "A score of 2.0 on Resistance represents the most urgent finding in this assessment. In financial services transformations of this scale, undetected resistance surfaces 6–9 months post-initiation — at the point where course correction becomes structurally costly. Without a formal monitoring mechanism, the organisation is operationally blind to the signals that precede adoption failure.",
+    action: "Establish a biweekly anonymous pulse across all impacted units. Appoint a Change Champion per business unit with an explicit mandate to surface resistance before it reaches critical mass.",
+    benchmark: "Organisations with active resistance monitoring are 2.3× more likely to meet adoption targets within six months of go-live. (Prosci, 2023 Benchmarking Report)",
   },
 };
 
-/* ── Helpers ────────────────────────────────────────────────── */
-function avgScore(answers, questions) {
-  const vals = questions.map(q => answers[q.id] || 0).filter(v => v > 0);
+/* ── Helpers ───────────────────────────────────────────────── */
+function avg(answers, questions) {
+  const vals = questions.map(q => answers[q.id]||0).filter(v=>v>0);
   return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
 }
 function getLevel(score) {
-  if (score >= 4.2) return { label:"Strong",   color:T.sage,  bg:T.lime,   desc:"Strong readiness fundamentals are in place." };
-  if (score >= 3.2) return { label:"Moderate", color:T.goldD, bg:T.goldL,  desc:"A reasonable foundation exists but important gaps remain." };
-  if (score >= 2.2) return { label:"At Risk",  color:T.amber, bg:T.amberL, desc:"Significant readiness gaps exist that could derail success." };
-  return               { label:"Critical", color:T.red,   bg:T.redL,   desc:"Immediate action is required before proceeding." };
+  if (score >= 4.2) return { label:"Strong",   color:T.green,  bg:T.greenL };
+  if (score >= 3.2) return { label:"Moderate", color:T.gold,   bg:T.goldL  };
+  if (score >= 2.2) return { label:"At Risk",  color:T.amber,  bg:T.amberL };
+  return               { label:"Critical", color:T.red,    bg:T.redL   };
 }
-function scoreColor(s){ return s>=4.2?T.sage : s>=3.2?T.goldD : s>=2.2?T.amber : T.red; }
+function bandColor(s){ return s>=4.2?T.green : s>=3.2?T.gold : s>=2.2?T.amber : T.red; }
+function formatDate(){ return new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}); }
 
 function buildPrompt(type, context, answers, questions, overall, lv) {
-  const isChange = type === "change";
-  const scoreLines = questions.map(q => `  • ${q.cat} (${answers[q.id]||0}/5): "${q.text}"`).join("\n");
+  const isChange = type==="change";
+  const scoreLines = questions.map(q=>`  • ${q.cat} (${answers[q.id]||0}/5): "${q.text}"`).join("\n");
   const lowScores = questions.filter(q=>(answers[q.id]||0)<=2.5).map(q=>q.cat).join(", ");
   const highScores = questions.filter(q=>(answers[q.id]||0)>=4).map(q=>q.cat).join(", ");
-
   const system = isChange
     ? `You are a senior change management consultant with 20+ years of experience. Deep expertise in ADKAR, Kotter, Bridges, and Prosci. RULES: Never state the obvious. Reference specific scores AND industry context in every insight. Every recommendation must be executable tomorrow. Include real research benchmarks. Be direct and honest even when uncomfortable.`
     : `You are a world-class expert in AI adoption and organisational change. RULES: Never state the obvious about AI. Reference the organisation's industry. Every recommendation must be executable. Include real research benchmarks. Be honest about AI risks organisations typically underestimate.`;
-
-  const user = `ASSESSMENT: ${isChange ? "Change Readiness" : "AI Adoption Readiness"}
+  const user = `ASSESSMENT: ${isChange?"Change Readiness":"AI Adoption Readiness"}
 ORGANISATION: ${context.orgName}
 ROLE: ${context.role}
 INITIATIVE: ${context.changeDesc}
-${context.industry ? `INDUSTRY: ${context.industry}` : ""}
-${context.size ? `SIZE: ${context.size}` : ""}
+${context.industry?`INDUSTRY: ${context.industry}`:""}
+${context.size?`SIZE: ${context.size}`:""}
 OVERALL SCORE: ${overall.toFixed(2)}/5.0 — ${lv.label}
-LOW SCORES (<=2.5): ${lowScores || "None"}
-HIGH SCORES (>=4.0): ${highScores || "None"}
-
-SCORES:
-${scoreLines}
+LOW SCORES (<=2.5): ${lowScores||"None"}
+HIGH SCORES (>=4.0): ${highScores||"None"}
+SCORES:\n${scoreLines}
 
 Write a report with EXACTLY these five sections using ## headings:
-
 ## Executive Summary
 3-4 sentences. Direct and honest. Reference the overall score and what it means for THIS specific initiative.
-
 ## Key Findings
 Exactly 4 findings. Each must reference a specific score, explain what it means in their industry context, and reveal a non-obvious implication. Use bold titles.
-
 ## Critical Risk Areas
 Focus on 2-3 lowest dimensions. State real-world consequences. Give one immediate action per risk.
-
 ## Recommended Actions
 Exactly 5 prioritised actions. Each must include: specific action, owner, timeline, and why this above others.
-
 ## What Good Looks Like
 A vivid specific 90-day picture of success. Make it tangible and motivating.`;
-
   return { system, user };
 }
 
-/* ── Global CSS ─────────────────────────────────────────────── */
+/* ── CSS ───────────────────────────────────────────────────── */
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   html { scroll-behavior:smooth; }
-  body { background:${T.off}; color:${T.body}; font-family:'Inter',sans-serif; line-height:1.6; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
-  ::selection { background:${T.lime}; color:${T.forest}; }
-  ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:${T.light}} ::-webkit-scrollbar-thumb{background:${T.border};border-radius:3px}
+  body { background:${T.paper}; color:${T.body}; font-family:'Inter',sans-serif; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  ::selection { background:${T.charL}; color:white; }
+  ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:${T.smoke}} ::-webkit-scrollbar-thumb{background:${T.border};border-radius:2px}
 
-  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
   @keyframes fadeIn { from{opacity:0} to{opacity:1} }
   @keyframes spin { to{transform:rotate(360deg)} }
-  @keyframes floaty { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-12px) rotate(-1deg)} }
-  @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
-  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(64,145,108,.35)} 50%{box-shadow:0 0 0 12px rgba(64,145,108,0)} }
-  @keyframes barGrow { from{width:0} }
-  @keyframes drawArc { from{stroke-dashoffset:var(--circ)} }
+  @keyframes barFill { from{width:0} to{width:var(--w)} }
 
-  .fu{animation:fadeUp .6s cubic-bezier(.22,1,.36,1) both}
-  .fu1{animation:fadeUp .6s .1s cubic-bezier(.22,1,.36,1) both}
-  .fu2{animation:fadeUp .6s .2s cubic-bezier(.22,1,.36,1) both}
-  .fu3{animation:fadeUp .6s .3s cubic-bezier(.22,1,.36,1) both}
-  .fu4{animation:fadeUp .6s .4s cubic-bezier(.22,1,.36,1) both}
+  .fu  { animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both; }
+  .fu1 { animation:fadeUp .5s .07s cubic-bezier(.22,1,.36,1) both; }
+  .fu2 { animation:fadeUp .5s .14s cubic-bezier(.22,1,.36,1) both; }
+  .fu3 { animation:fadeUp .5s .21s cubic-bezier(.22,1,.36,1) both; }
+  .fu4 { animation:fadeUp .5s .28s cubic-bezier(.22,1,.36,1) both; }
+  .mono { font-family:'DM Mono',monospace; }
 
-  .serif{font-family:'Playfair Display',serif}
-  .mono{font-family:'DM Mono',monospace}
-  input,textarea,select{font-family:'Inter',sans-serif}
-  button{cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif}
+  /* Slider */
+  .rslider { -webkit-appearance:none; appearance:none; width:100%; height:40px; background:transparent; cursor:grab; touch-action:pan-y; }
+  .rslider:active { cursor:grabbing; }
+  .rslider::-webkit-slider-runnable-track { height:3px; border-radius:0; background:var(--fill, ${T.border}); }
+  .rslider::-moz-range-track { height:3px; background:var(--fill, ${T.border}); }
+  .rslider::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--thumb, ${T.charMid}); border:2px solid white; box-shadow:0 1px 6px rgba(0,0,0,.22); margin-top:-7.5px; transition:transform .12s; }
+  .rslider::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:var(--thumb, ${T.charMid}); border:2px solid white; box-shadow:0 1px 6px rgba(0,0,0,.22); }
+  .rslider:hover::-webkit-slider-thumb { transform:scale(1.2); }
+  .rslider:focus-visible { outline:2px solid ${T.charL}; outline-offset:4px; }
 
-  .hero-card { animation: floaty 7s ease-in-out infinite; }
+  input,textarea,select { font-family:'Inter',sans-serif; }
+  button { cursor:pointer; border:none; background:none; font-family:'Inter',sans-serif; }
 
-  /* ── Rating slider ── */
-  .rate-slider { -webkit-appearance:none; appearance:none; width:100%; height:44px; background:transparent; cursor:grab; touch-action:pan-y; }
-  .rate-slider:active { cursor:grabbing; }
-  .rate-slider::-webkit-slider-runnable-track { height:12px; border-radius:6px; background:var(--track, ${T.light}); border:1px solid ${T.border}; }
-  .rate-slider::-moz-range-track { height:12px; border-radius:6px; background:var(--track, ${T.light}); border:1px solid ${T.border}; }
-  .rate-slider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:30px; height:30px; border-radius:50%; background:var(--thumb, ${T.muted}); border:3px solid white; box-shadow:0 2px 10px rgba(0,0,0,.25); margin-top:-10px; transition:transform .15s, background .2s; }
-  .rate-slider::-moz-range-thumb { width:30px; height:30px; border-radius:50%; background:var(--thumb, ${T.muted}); border:3px solid white; box-shadow:0 2px 10px rgba(0,0,0,.25); transition:transform .15s, background .2s; }
-  .rate-slider:hover::-webkit-slider-thumb { transform:scale(1.12); }
-  .rate-slider:focus-visible { outline:2px solid ${T.forest}; outline-offset:4px; border-radius:8px; }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
-    .hero-card { animation:none; }
-  }
-  @media (max-width: 860px) {
-    .hero-grid { grid-template-columns: 1fr !important; gap:48px !important; }
-    .hero-card { animation:none; margin:0 auto; }
-    .two-col { grid-template-columns: 1fr !important; }
+  @media (max-width:820px) {
+    .hero-grid { grid-template-columns:1fr !important; }
+    .two-col   { grid-template-columns:1fr !important; }
+    .three-col { grid-template-columns:1fr !important; }
   }
 `;
 
-/* ── Tiny shared components ─────────────────────────────────── */
-function Badge({ children, color=T.forest, bg=T.lime }) {
-  return <span style={{ display:"inline-block", padding:"4px 13px", borderRadius:100, background:bg, color, fontSize:11, fontWeight:600, letterSpacing:1, textTransform:"uppercase" }}>{children}</span>;
+/* ── Primitive components ──────────────────────────────────── */
+function Tag({ children, color=T.char, bg=T.smoke }) {
+  return (
+    <span style={{ display:"inline-block", padding:"3px 10px", background:bg, color, fontSize:10, fontWeight:700, letterSpacing:1.4, textTransform:"uppercase", border:`1px solid ${color}20` }}>
+      {children}
+    </span>
+  );
 }
 
-function PrimaryBtn({ children, onClick, disabled, small, glow }) {
+function PrimaryBtn({ children, onClick, disabled, small }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
       display:"inline-flex", alignItems:"center", justifyContent:"center", gap:8,
-      padding:small?"10px 22px":"15px 34px", borderRadius:10,
-      fontSize:small?13:15, fontWeight:600, letterSpacing:.2,
-      background:disabled?T.border:T.forest, color:disabled?T.muted:T.white,
-      cursor:disabled?"not-allowed":"pointer", transition:"all .25s cubic-bezier(.22,1,.36,1)",
-      boxShadow:disabled?"none":"0 4px 14px rgba(27,67,50,.3)",
-      animation: glow && !disabled ? "pulse 2.5s ease infinite" : "none",
+      padding:small?"9px 20px":"13px 32px",
+      fontSize:small?12:13, fontWeight:700, letterSpacing:.8, textTransform:"uppercase",
+      background:disabled?T.border:T.char, color:disabled?T.muted:T.white,
+      border:"none", borderRadius:4, cursor:disabled?"not-allowed":"pointer",
+      transition:"background .2s, transform .15s",
     }}
-      onMouseEnter={e=>{if(!disabled){e.currentTarget.style.background="#163829";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(27,67,50,.35)";}}}
-      onMouseLeave={e=>{e.currentTarget.style.background=disabled?T.border:T.forest;e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow=disabled?"none":"0 4px 14px rgba(27,67,50,.3)";}}
+      onMouseEnter={e=>{if(!disabled){e.currentTarget.style.background=T.charL;e.currentTarget.style.transform="translateY(-1px)";}}}
+      onMouseLeave={e=>{e.currentTarget.style.background=disabled?T.border:T.char;e.currentTarget.style.transform="translateY(0)";}}
     >{children}</button>
   );
 }
 
-function OutlineBtn({ children, onClick, light }) {
-  const c = light ? "rgba(255,255,255,.9)" : T.forest;
-  const b = light ? "rgba(255,255,255,.35)" : T.forest;
+function GhostBtn({ children, onClick, light }) {
+  const c = light ? "rgba(255,255,255,.85)" : T.char;
+  const b = light ? "rgba(255,255,255,.3)"  : T.charL;
   return (
     <button onClick={onClick} style={{
       display:"inline-flex", alignItems:"center", gap:6,
-      padding:"14px 30px", borderRadius:10, fontSize:14, fontWeight:500,
-      border:`1.5px solid ${b}`, color:c, background:"transparent",
-      transition:"all .25s", letterSpacing:.2,
+      padding:"12px 28px", borderRadius:4,
+      fontSize:12, fontWeight:700, letterSpacing:.8, textTransform:"uppercase",
+      border:`1px solid ${b}`, color:c, background:"transparent", transition:"all .2s",
     }}
-      onMouseEnter={e=>e.currentTarget.style.background=light?"rgba(255,255,255,.08)":T.lime}
+      onMouseEnter={e=>e.currentTarget.style.background=light?"rgba(255,255,255,.06)":T.smoke}
       onMouseLeave={e=>e.currentTarget.style.background="transparent"}
     >{children}</button>
   );
 }
 
-function Label({ children, required }) {
-  return <div style={{ fontSize:11, fontWeight:600, letterSpacing:1.2, textTransform:"uppercase", color:T.muted, marginBottom:7 }}>{children}{required&&<span style={{color:T.red}}> *</span>}</div>;
+function FieldLabel({ children, required }) {
+  return <div style={{ fontSize:10, fontWeight:700, letterSpacing:1.4, textTransform:"uppercase", color:T.muted, marginBottom:7 }}>{children}{required&&<span style={{color:T.red}}> *</span>}</div>;
 }
 
 function TextInput({ label, value, onChange, placeholder, type="text", required }) {
-  const [focused, setFocused] = useState(false);
+  const [f,setF] = useState(false);
   return (
     <div>
-      {label && <Label required={required}>{label}</Label>}
+      {label && <FieldLabel required={required}>{label}</FieldLabel>}
       <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
-        onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
-        style={{ width:"100%", padding:"13px 15px", borderRadius:9, fontSize:14, border:`1.5px solid ${focused?T.forest:T.border}`, background:T.white, color:T.ink, outline:"none", transition:"border-color .2s, box-shadow .2s", boxShadow:focused?`0 0 0 3px ${T.lime}`:"none" }}
+        onFocus={()=>setF(true)} onBlur={()=>setF(false)}
+        style={{ width:"100%", padding:"12px 14px", borderRadius:4, fontSize:14, border:`1px solid ${f?T.char:T.border}`, background:T.white, color:T.ink, outline:"none", transition:"border-color .2s" }}
       />
     </div>
   );
 }
 
+/* ── Step indicator ────────────────────────────────────────── */
 function Steps({ current }) {
-  const steps = ["Context","Assessment","Your Details","Report"];
+  const steps = ["Context","Assessment","Details","Report"];
   return (
     <div style={{ display:"flex", alignItems:"center", marginBottom:44 }}>
       {steps.map((s,i)=>(
         <div key={s} style={{ display:"flex", alignItems:"center", flex:i<steps.length-1?1:"none" }}>
           <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:5 }}>
-            <div style={{ width:34, height:34, borderRadius:"50%", background:i<=current?T.forest:T.white, border:`2px solid ${i<=current?T.forest:T.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:i<=current?T.white:T.muted, transition:"all .3s", boxShadow:i===current?`0 0 0 4px ${T.lime}`:"none" }}>{i<current?"✓":i+1}</div>
-            <span style={{ fontSize:10, fontWeight:600, color:i===current?T.forest:T.muted, whiteSpace:"nowrap", letterSpacing:.5 }}>{s.toUpperCase()}</span>
+            <div style={{ width:28, height:28, background:i<current?T.char:i===current?T.char:T.white, border:`1px solid ${i<=current?T.char:T.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:i<=current?T.white:T.muted, transition:"all .25s", borderRadius:2 }}>{i<current?"✓":i+1}</div>
+            <span style={{ fontSize:9, fontWeight:700, letterSpacing:1.2, textTransform:"uppercase", color:i===current?T.char:T.muted, whiteSpace:"nowrap" }}>{s}</span>
           </div>
-          {i<steps.length-1&&<div style={{ flex:1, height:2, background:i<current?T.forest:T.border, margin:"0 10px", marginBottom:18, transition:"background .3s", borderRadius:2 }}/>}
+          {i<steps.length-1 && <div style={{ flex:1, height:1, background:i<current?T.char:T.border, margin:"0 8px", marginBottom:18, transition:"background .3s" }}/>}
         </div>
       ))}
     </div>
   );
 }
 
-/* ── Gauge (SVG, animated) ──────────────────────────────────── */
-function Gauge({ score, size=170, dark=false, animate=true }) {
-  const lv = getLevel(score);
-  const pct = (score-1)/4;
-  const r = size*0.34, cx=size/2, cy=size*0.58;
-  const circ = Math.PI*r;
-  const dash = pct*circ;
-  const [drawn, setDrawn] = useState(!animate);
-  useEffect(()=>{ if(animate){ const t=setTimeout(()=>setDrawn(true), 300); return ()=>clearTimeout(t);} },[animate]);
+/* ── Score bar (no animation flash, clean) ─────────────────── */
+function ScoreBar({ cat, score, index }) {
+  const color = bandColor(score);
+  const pct   = ((score-1)/4)*100;
+  const [on, setOn] = useState(false);
+  useEffect(()=>{ const t=setTimeout(()=>setOn(true),index*55+300); return()=>clearTimeout(t); },[index]);
+  return (
+    <div style={{ display:"grid", gridTemplateColumns:"130px 1fr 36px", alignItems:"center", gap:14, marginBottom:10 }}>
+      <div style={{ fontSize:11, fontWeight:500, color:T.body }}>{cat}</div>
+      <div style={{ height:4, background:T.rule }}>
+        <div style={{ height:"100%", width:on?`${pct}%`:"0%", background:color, transition:"width .8s cubic-bezier(.22,1,.36,1)" }}/>
+      </div>
+      <div className="mono" style={{ fontSize:11, fontWeight:500, color, textAlign:"right" }}>{score.toFixed(1)}</div>
+    </div>
+  );
+}
+
+/* ── Score dial (SVG, minimal) ─────────────────────────────── */
+function Dial({ score, size=160, light=false }) {
+  const lv   = getLevel(score);
+  const pct  = (score-1)/4;
+  const r    = size*0.33, cx=size/2, cy=size*0.58;
+  const circ = Math.PI*r, dash=pct*circ;
+  const [on, setOn] = useState(false);
+  useEffect(()=>{ const t=setTimeout(()=>setOn(true),400); return()=>clearTimeout(t); },[]);
   return (
     <div style={{ textAlign:"center" }}>
-      <svg width={size} height={size*0.66} viewBox={`0 0 ${size} ${size*0.66}`}>
-        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`}
-          fill="none" stroke={dark?"rgba(255,255,255,.12)":T.light} strokeWidth={size*0.075} strokeLinecap="round"/>
-        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`}
-          fill="none" stroke={lv.color} strokeWidth={size*0.075} strokeLinecap="round"
-          strokeDasharray={`${drawn?dash:0} ${circ}`}
-          style={{ transition:"stroke-dasharray 1.4s cubic-bezier(.22,1,.36,1)", filter:`drop-shadow(0 0 ${size*0.05}px ${lv.color}90)` }}/>
-        <text x={cx} y={cy-size*0.05} textAnchor="middle" fill={dark?T.white:T.ink}
-          style={{ fontSize:size*0.16, fontWeight:700, fontFamily:"'Playfair Display',serif" }}>{score.toFixed(1)}</text>
-        <text x={cx} y={cy+size*0.06} textAnchor="middle" fill={dark?"rgba(255,255,255,.4)":T.muted}
-          style={{ fontSize:size*0.055, fontFamily:"'DM Mono',monospace", letterSpacing:1 }}>OUT OF 5.0</text>
+      <svg width={size} height={size*0.65} viewBox={`0 0 ${size} ${size*0.65}`}>
+        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`} fill="none" stroke={light?"rgba(255,255,255,.12)":T.rule} strokeWidth={size*0.055} strokeLinecap="butt"/>
+        <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`} fill="none" stroke={lv.color} strokeWidth={size*0.055} strokeLinecap="butt"
+          strokeDasharray={`${on?dash:0} ${circ}`} style={{ transition:"stroke-dasharray 1.2s cubic-bezier(.22,1,.36,1)" }}/>
+        <text x={cx} y={cy-size*.04} textAnchor="middle" fill={light?T.white:T.ink} style={{ fontSize:size*.17, fontWeight:800, fontFamily:"'Inter',sans-serif", letterSpacing:-1 }}>{score.toFixed(1)}</text>
+        <text x={cx} y={cy+size*.06} textAnchor="middle" fill={light?"rgba(255,255,255,.35)":T.muted} style={{ fontSize:size*.055, fontFamily:"'DM Mono',monospace", letterSpacing:1.2 }}>/5.0</text>
       </svg>
-      <div style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:2, padding:"5px 15px", borderRadius:100, background:dark?"rgba(255,255,255,.1)":lv.bg }}>
-        <div style={{ width:7, height:7, borderRadius:"50%", background:lv.color }}/>
-        <span style={{ fontSize:12, fontWeight:700, color:dark?T.white:lv.color, letterSpacing:.5 }}>{lv.label} Readiness</span>
+      <div style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"4px 12px", border:`1px solid ${lv.color}40`, background:light?"rgba(255,255,255,.06)":lv.bg }}>
+        <div style={{ width:5, height:5, background:lv.color }}/>
+        <span style={{ fontSize:10, fontWeight:700, color:light?T.white:lv.color, letterSpacing:.8, textTransform:"uppercase" }}>{lv.label}</span>
       </div>
     </div>
   );
 }
 
-/* ── Dimension bar ──────────────────────────────────────────── */
-function DimBar({ cat, score, index, compact=false, dark=false }) {
-  const color = scoreColor(score);
-  const pct = ((score-1)/4)*100;
-  const [animated, setAnimated] = useState(false);
-  useEffect(()=>{ const t=setTimeout(()=>setAnimated(true), index*70+350); return()=>clearTimeout(t); },[index]);
-  return (
-    <div style={{ display:"grid", gridTemplateColumns:compact?"86px 1fr 30px":"150px 1fr 44px", alignItems:"center", gap:compact?8:12, marginBottom:compact?7:11 }}>
-      <div style={{ fontSize:compact?10:12, fontWeight:500, color:dark?"rgba(255,255,255,.65)":T.body, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{cat}</div>
-      <div style={{ height:compact?6:9, background:dark?"rgba(255,255,255,.1)":T.light, borderRadius:5, overflow:"hidden" }}>
-        <div style={{ height:"100%", width:animated?`${pct}%`:"0%", borderRadius:5, background:color, transition:"width .9s cubic-bezier(.22,1,.36,1)", boxShadow:`0 0 6px ${color}70` }}/>
-      </div>
-      <div className="mono" style={{ fontSize:compact?10:12, fontWeight:700, color, textAlign:"right" }}>{score.toFixed(1)}</div>
-    </div>
-  );
-}
-
-/* ── Hero report preview card ───────────────────────────────── */
-function HeroReportCard({ onSeeFull }) {
-  return (
-    <div className="hero-card" style={{
-      width:"min(400px, 92vw)", background:"rgba(255,255,255,.06)",
-      backdropFilter:"blur(18px)", WebkitBackdropFilter:"blur(18px)",
-      border:"1px solid rgba(255,255,255,.14)", borderRadius:20,
-      padding:"26px 26px 22px", boxShadow:"0 24px 60px rgba(0,0,0,.35)",
-      transform:"rotate(-1deg)",
-    }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-        <div>
-          <div className="serif" style={{ fontSize:15, fontWeight:700, color:T.white }}>Ado<span style={{color:T.gold}}>vio</span> <span style={{ fontWeight:400, color:"rgba(255,255,255,.45)", fontSize:12 }}>· Readiness Report</span></div>
-          <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginTop:1 }}>{SAMPLE.org}</div>
-        </div>
-        <span style={{ fontSize:9, padding:"3px 9px", borderRadius:100, background:"rgba(212,168,67,.18)", color:T.gold, fontWeight:700, letterSpacing:.8 }}>SAMPLE</span>
-      </div>
-
-      <div style={{ display:"flex", justifyContent:"center", marginBottom:6 }}>
-        <Gauge score={SAMPLE.overall} size={150} dark/>
-      </div>
-
-      <div style={{ marginTop:16, paddingTop:16, borderTop:"1px solid rgba(255,255,255,.1)" }}>
-        {SAMPLE.dims.slice(0,5).map((d,i)=><DimBar key={d.cat} {...d} index={i} compact dark/>)}
-      </div>
-
-      <button onClick={onSeeFull} style={{
-        marginTop:14, width:"100%", padding:"11px", borderRadius:9,
-        background:"rgba(255,255,255,.1)", border:"1px solid rgba(255,255,255,.18)",
-        color:T.white, fontSize:13, fontWeight:600, transition:"all .2s",
-      }}
-        onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.16)"}
-        onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.1)"}
-      >See the full sample report →</button>
-    </div>
-  );
-}
-
-/* ── Sample report modal ────────────────────────────────────── */
+/* ── Sample modal ──────────────────────────────────────────── */
 function SampleModal({ open, onClose, onStart }) {
   if (!open) return null;
-  const ex = SAMPLE.excerpt;
+  const f = SAMPLE.finding;
   return (
-    <div onClick={onClose} style={{
-      position:"fixed", inset:0, zIndex:200, background:"rgba(10,31,20,.65)",
-      backdropFilter:"blur(6px)", display:"flex", alignItems:"flex-start", justifyContent:"center",
-      padding:"5vh 16px", overflowY:"auto", animation:"fadeIn .25s ease both",
-    }}>
-      <div onClick={e=>e.stopPropagation()} style={{
-        width:"min(680px, 100%)", background:T.off, borderRadius:18,
-        boxShadow:"0 32px 80px rgba(0,0,0,.4)", overflow:"hidden",
-        animation:"fadeUp .35s cubic-bezier(.22,1,.36,1) both",
-      }}>
-        {/* header */}
-        <div style={{ background:`linear-gradient(135deg,${T.forest},${T.deep})`, padding:"28px 32px", position:"relative" }}>
-          <button onClick={onClose} style={{ position:"absolute", top:16, right:16, width:32, height:32, borderRadius:"50%", background:"rgba(255,255,255,.12)", color:T.white, fontSize:16 }}>✕</button>
-          <Badge color={T.lime} bg="rgba(255,255,255,.12)">Sample Report</Badge>
-          <h2 className="serif" style={{ fontSize:24, fontWeight:700, color:T.white, margin:"12px 0 4px" }}>{SAMPLE.org}</h2>
-          <p style={{ fontSize:12, color:"rgba(255,255,255,.5)", fontStyle:"italic" }}>"{SAMPLE.initiative}"</p>
+    <div onClick={onClose} style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(17,17,16,.7)", backdropFilter:"blur(4px)", display:"flex", alignItems:"flex-start", justifyContent:"center", padding:"4vh 16px 40px", overflowY:"auto", animation:"fadeIn .2s ease" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:"min(700px,100%)", background:T.white, boxShadow:"0 24px 80px rgba(0,0,0,.35)", animation:"fadeUp .3s cubic-bezier(.22,1,.36,1)" }}>
+
+        {/* Modal header */}
+        <div style={{ background:T.char, padding:"28px 32px", position:"relative" }}>
+          <button onClick={onClose} style={{ position:"absolute", top:16, right:20, width:28, height:28, background:"rgba(255,255,255,.1)", color:T.white, fontSize:13, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>
+          <Tag color={T.white} bg="rgba(255,255,255,.1)">Sample Report</Tag>
+          <div style={{ fontSize:22, fontWeight:800, color:T.white, margin:"12px 0 2px", letterSpacing:-.5 }}>{SAMPLE.org}</div>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,.4)", letterSpacing:.5 }}>{SAMPLE.type} · Confidential</div>
         </div>
 
         <div style={{ padding:"28px 32px" }}>
-          {/* score + bars */}
-          <div className="two-col" style={{ display:"grid", gridTemplateColumns:"auto 1fr", gap:28, alignItems:"center", background:T.white, border:`1px solid ${T.border}`, borderRadius:14, padding:"24px 28px", marginBottom:18 }}>
-            <Gauge score={SAMPLE.overall} size={150}/>
-            <div>
-              {SAMPLE.dims.map((d,i)=><DimBar key={d.cat} {...d} index={i}/>)}
+
+          {/* Score + bars */}
+          <div style={{ display:"grid", gridTemplateColumns:"auto 1fr", gap:28, alignItems:"center", padding:"22px 24px", border:`1px solid ${T.rule}`, marginBottom:18 }}>
+            <Dial score={SAMPLE.overall} size={148}/>
+            <div style={{ paddingLeft:8 }}>
+              <div style={{ fontSize:10, fontWeight:700, letterSpacing:1.4, textTransform:"uppercase", color:T.muted, marginBottom:14 }}>Dimension Profile</div>
+              {SAMPLE.dims.map((d,i)=><ScoreBar key={d.cat} {...d} index={i}/>)}
             </div>
           </div>
 
-          {/* excerpt insight */}
-          <div style={{ background:T.white, border:`1px solid ${T.border}`, borderLeft:`4px solid ${T.amber}`, borderRadius:14, padding:"24px 28px", marginBottom:18 }}>
-            <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:10 }}>
-              <span>⚠️</span><Badge color={T.amber} bg={T.amberL}>Risk Insight</Badge>
+          {/* Finding */}
+          <div style={{ borderLeft:`3px solid ${T.amber}`, paddingLeft:18, marginBottom:22 }}>
+            <div style={{ fontSize:10, fontWeight:700, letterSpacing:1.4, textTransform:"uppercase", color:T.amber, marginBottom:8 }}>Critical Risk Finding</div>
+            <div style={{ fontSize:15, fontWeight:700, color:T.ink, marginBottom:10, letterSpacing:-.2 }}>{f.title}</div>
+            <p style={{ fontSize:13, color:T.mid, lineHeight:1.8, marginBottom:14 }}>{f.body}</p>
+            <div style={{ background:T.smoke, padding:"14px 16px", borderLeft:`2px solid ${T.border}`, marginBottom:12 }}>
+              <div style={{ fontSize:10, fontWeight:700, letterSpacing:1.4, textTransform:"uppercase", color:T.muted, marginBottom:6 }}>Recommended Action</div>
+              <p style={{ fontSize:13, color:T.body, lineHeight:1.7 }}>{f.action}</p>
             </div>
-            <h3 className="serif" style={{ fontSize:18, fontWeight:700, color:T.ink, marginBottom:10 }}>{ex.heading}</h3>
-            <p style={{ fontSize:13.5, color:T.mid, lineHeight:1.8, marginBottom:14 }}>{ex.body}</p>
-            <div style={{ background:T.off, borderRadius:9, padding:"13px 16px", border:`1px solid ${T.border}`, marginBottom:10 }}>
-              <div style={{ fontSize:10, fontWeight:700, color:T.amber, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Recommended Action</div>
-              <p style={{ fontSize:12.5, color:T.body, lineHeight:1.7 }}>{ex.action}</p>
-            </div>
-            <p style={{ fontSize:11.5, color:T.muted, fontStyle:"italic" }}>📊 {ex.benchmark}</p>
+            <p style={{ fontSize:11.5, color:T.muted, fontStyle:"italic" }}>{f.benchmark}</p>
           </div>
 
-          <p style={{ fontSize:12.5, color:T.muted, textAlign:"center", marginBottom:18 }}>
-            Your full report includes an executive summary, 4 key findings, risk analysis, 5 prioritised actions, and a 90-day success picture — tailored to <em>your</em> scores, industry, and initiative.
+          <p style={{ fontSize:12.5, color:T.muted, marginBottom:22, lineHeight:1.65 }}>
+            Your full report includes an executive summary, four key findings, a risk analysis, five prioritised actions, and a 90-day outlook — generated by AI and tailored to your scores, industry, and initiative.
           </p>
 
-          <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>
-            <PrimaryBtn glow onClick={onStart}>Get my report — free →</PrimaryBtn>
-            <OutlineBtn onClick={onClose}>Close</OutlineBtn>
+          <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
+            <PrimaryBtn onClick={onStart}>Begin assessment</PrimaryBtn>
+            <GhostBtn onClick={onClose}>Close</GhostBtn>
           </div>
         </div>
       </div>
@@ -401,403 +349,446 @@ function SampleModal({ open, onClose, onStart }) {
   );
 }
 
-/* ── Home ───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   HOME SCREEN
+══════════════════════════════════════════════════════════ */
 function HomeScreen({ onStart }) {
-  const [sampleOpen, setSampleOpen] = useState(false);
+  const [sample, setSample] = useState(false);
   return (
     <div>
-      <SampleModal open={sampleOpen} onClose={()=>setSampleOpen(false)} onStart={()=>{setSampleOpen(false); onStart("change");}}/>
+      <SampleModal open={sample} onClose={()=>setSample(false)} onStart={()=>{setSample(false);onStart("change");}}/>
 
       {/* HERO */}
-      <section style={{ background:`linear-gradient(155deg,${T.forest} 0%,${T.deep} 70%,#08160F 100%)`, padding:"88px 24px 96px", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, opacity:.05, backgroundImage:`radial-gradient(circle,white 1px,transparent 1px)`, backgroundSize:"34px 34px" }}/>
-        <div style={{ position:"absolute", top:"-180px", right:"-120px", width:560, height:560, borderRadius:"50%", background:`radial-gradient(circle, ${T.sage}25 0%, transparent 65%)` }}/>
-        <div style={{ position:"absolute", bottom:"-200px", left:"-140px", width:520, height:520, borderRadius:"50%", background:`radial-gradient(circle, ${T.gold}14 0%, transparent 65%)` }}/>
+      <section style={{ background:T.char, padding:"96px 32px 88px", position:"relative", overflow:"hidden" }}>
+        {/* grid lines */}
+        <div style={{ position:"absolute", inset:0, backgroundImage:`linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px)`, backgroundSize:"48px 48px" }}/>
+        <div style={{ position:"absolute", bottom:0, left:0, right:0, height:1, background:T.charL }}/>
 
-        <div className="hero-grid" style={{ position:"relative", zIndex:1, maxWidth:1080, margin:"0 auto", display:"grid", gridTemplateColumns:"1.1fr 0.9fr", gap:56, alignItems:"center" }}>
+        <div className="hero-grid" style={{ position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", display:"grid", gridTemplateColumns:"1.15fr .85fr", gap:64, alignItems:"center" }}>
           <div>
-            <div className="fu" style={{ marginBottom:22 }}>
-              <Badge color={T.mint} bg="rgba(255,255,255,.1)">Free · No login · 10 minutes</Badge>
+            <div className="fu" style={{ marginBottom:20 }}>
+              <Tag color="rgba(255,255,255,.55)" bg="rgba(255,255,255,.06)">Change Intelligence Platform</Tag>
             </div>
-            <h1 className="serif fu1" style={{ fontSize:"clamp(38px,5.2vw,62px)", fontWeight:800, color:T.white, lineHeight:1.1, letterSpacing:-1, marginBottom:22 }}>
-              Know if your<br/>organisation is ready<br/><span style={{ color:T.gold, fontStyle:"italic", fontWeight:700 }}>before</span> you launch.
+            <h1 className="fu1" style={{ fontSize:"clamp(34px,4.8vw,58px)", fontWeight:800, color:T.white, lineHeight:1.08, letterSpacing:-1.5, marginBottom:22 }}>
+              Know if your<br/>organisation is ready<br/><span style={{ color:T.mint }}>before</span> you launch.
             </h1>
-            <p className="fu2" style={{ fontSize:16.5, color:"rgba(255,255,255,.7)", lineHeight:1.75, maxWidth:460, marginBottom:36 }}>
-              AI-powered change readiness diagnostics built by a practitioner, for practitioners. Answer 10 questions — get a personalised report with findings, risks, and actions in your inbox.
+            <p className="fu2" style={{ fontSize:16, color:"rgba(255,255,255,.55)", lineHeight:1.75, maxWidth:440, marginBottom:36 }}>
+              A proprietary AI diagnostic built on 20 years of change management practice. Ten questions. A personalised readiness report in your inbox.
             </p>
-            <div className="fu3" style={{ display:"flex", gap:14, flexWrap:"wrap", marginBottom:34 }}>
-              <PrimaryBtn glow onClick={()=>onStart("change")} >Start free assessment →</PrimaryBtn>
-              <OutlineBtn light onClick={()=>setSampleOpen(true)}>See a sample report</OutlineBtn>
+            <div className="fu3" style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:40 }}>
+              <PrimaryBtn onClick={()=>onStart("change")}>Start assessment</PrimaryBtn>
+              <GhostBtn light onClick={()=>setSample(true)}>View sample report</GhostBtn>
             </div>
-            <div className="fu4" style={{ display:"flex", gap:30, flexWrap:"wrap" }}>
-              {[["10 Qs","practitioner-grade"],["AI report","tailored to your context"],["100% free","for the change community"]].map(([v,l])=>(
-                <div key={l}>
-                  <div className="serif" style={{ fontSize:19, fontWeight:700, color:T.white }}>{v}</div>
-                  <div style={{ fontSize:11.5, color:"rgba(255,255,255,.45)" }}>{l}</div>
+            <div className="fu4" style={{ display:"grid", gridTemplateColumns:"repeat(3,auto)", gap:"0 32px", maxWidth:440 }}>
+              {[["10","Dimensions assessed"],["AI","Personalised analysis"],["Free","No login required"]].map(([v,l])=>(
+                <div key={l} style={{ borderTop:`1px solid rgba(255,255,255,.12)`, paddingTop:14 }}>
+                  <div style={{ fontSize:18, fontWeight:800, color:T.white, letterSpacing:-.5 }}>{v}</div>
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,.35)", letterSpacing:.4, marginTop:2 }}>{l}</div>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Score preview card */}
           <div className="fu2" style={{ display:"flex", justifyContent:"center" }}>
-            <HeroReportCard onSeeFull={()=>setSampleOpen(true)}/>
+            <div style={{ width:"min(360px,100%)", border:`1px solid rgba(255,255,255,.1)`, background:"rgba(255,255,255,.04)", padding:"24px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18, paddingBottom:14, borderBottom:"1px solid rgba(255,255,255,.08)" }}>
+                <div>
+                  <div style={{ fontSize:11, fontWeight:700, letterSpacing:1.2, textTransform:"uppercase", color:"rgba(255,255,255,.35)", marginBottom:2 }}>Sample Report</div>
+                  <div style={{ fontSize:13, fontWeight:600, color:T.white }}>{SAMPLE.org}</div>
+                </div>
+                <Tag color="rgba(255,255,255,.5)" bg="rgba(255,255,255,.06)">Preview</Tag>
+              </div>
+              <div style={{ display:"flex", justifyContent:"center", marginBottom:18 }}>
+                <Dial score={SAMPLE.overall} size={140} light/>
+              </div>
+              <div style={{ paddingTop:14, borderTop:"1px solid rgba(255,255,255,.08)" }}>
+                {SAMPLE.dims.slice(0,5).map((d,i)=>{
+                  const color = bandColor(d.score);
+                  const pct   = ((d.score-1)/4)*100;
+                  return (
+                    <div key={d.cat} style={{ display:"grid", gridTemplateColumns:"90px 1fr 26px", alignItems:"center", gap:10, marginBottom:8 }}>
+                      <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", fontWeight:500 }}>{d.cat}</div>
+                      <div style={{ height:3, background:"rgba(255,255,255,.1)" }}>
+                        <div style={{ height:"100%", width:`${pct}%`, background:color }}/>
+                      </div>
+                      <div className="mono" style={{ fontSize:10, color, textAlign:"right" }}>{d.score.toFixed(1)}</div>
+                    </div>
+                  );
+                })}
+                <button onClick={()=>setSample(true)} style={{ marginTop:14, width:"100%", padding:"10px", background:"rgba(255,255,255,.07)", border:"1px solid rgba(255,255,255,.12)", color:"rgba(255,255,255,.7)", fontSize:11, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", transition:"background .2s" }}
+                  onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.11)"}
+                  onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.07)"}
+                >View full sample report</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* TRUST STRIP */}
-      <section style={{ background:T.white, borderBottom:`1px solid ${T.border}`, padding:"18px 24px" }}>
-        <div style={{ maxWidth:900, margin:"0 auto", display:"flex", justifyContent:"center", alignItems:"center", gap:"clamp(16px,4vw,44px)", flexWrap:"wrap", fontSize:12.5, color:T.muted }}>
-          <span>🧭 Grounded in ADKAR · Kotter · Prosci</span>
-          <span>🤖 Reports generated by Claude AI</span>
-          <span>🔒 Your data is never sold or shared</span>
-          <span>🌱 Built by a 20-year change practitioner</span>
+      {/* METHODOLOGY STRIP */}
+      <section style={{ background:T.smoke, borderBottom:`1px solid ${T.rule}`, padding:"16px 32px" }}>
+        <div style={{ maxWidth:1100, margin:"0 auto", display:"flex", gap:32, flexWrap:"wrap", justifyContent:"center", alignItems:"center" }}>
+          {["Grounded in ADKAR, Kotter and Prosci methodology","Reports generated by Claude AI","Built by a 20-year change management practitioner","Data is never sold or shared"].map(s=>(
+            <div key={s} style={{ display:"flex", alignItems:"center", gap:8, fontSize:11.5, color:T.muted, fontWeight:500 }}>
+              <div style={{ width:4, height:4, background:T.border }}/>
+              {s}
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ASSESSMENTS */}
-      <section style={{ padding:"84px 24px", maxWidth:960, margin:"0 auto" }}>
-        <div style={{ textAlign:"center", marginBottom:52 }}>
-          <Badge>Two Diagnostics</Badge>
-          <h2 className="serif" style={{ fontSize:"clamp(28px,4vw,38px)", fontWeight:700, marginTop:16, letterSpacing:-.5 }}>Choose where to start</h2>
-          <p style={{ color:T.mid, marginTop:12, maxWidth:480, margin:"12px auto 0", fontSize:15 }}>Both take ~10 minutes. Both end with a personalised AI report in your inbox.</p>
+      <section style={{ padding:"88px 32px", maxWidth:1100, margin:"0 auto" }}>
+        <div style={{ marginBottom:56 }}>
+          <Tag>Two Diagnostics</Tag>
+          <h2 style={{ fontSize:"clamp(26px,3.4vw,36px)", fontWeight:800, marginTop:14, letterSpacing:-.6, lineHeight:1.15 }}>Select your diagnostic</h2>
+          <p style={{ color:T.mid, marginTop:10, maxWidth:420, fontSize:14.5 }}>Each assessment takes ten minutes and produces a personalised AI analysis delivered by email.</p>
         </div>
-        <div className="two-col" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:26 }}>
+        <div className="two-col" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:1, background:T.rule }}>
           {[
-            { type:"change", icon:"🔄", title:"Change Readiness", desc:"For any major initiative — ERP, restructure, M&A, culture shift. Diagnoses the 10 dimensions that decide whether change sticks.", tags:["Leadership","Resistance","Capacity","Engagement"], color:T.forest, bg:T.lime },
-            { type:"ai", icon:"🤖", title:"AI Adoption Readiness", desc:"For organisations rolling out AI. Measures the human layer most AI programmes skip — trust, narrative, manager readiness, psychological safety.", tags:["Culture","Ethics & Trust","Narrative","Managers"], color:T.blue, bg:T.blueL },
-          ].map((c,i)=>(
-            <div key={c.type} className={i===0?"fu":"fu1"} style={{ background:T.white, borderRadius:18, border:`1px solid ${T.border}`, padding:"38px 34px", transition:"all .3s cubic-bezier(.22,1,.36,1)", boxShadow:"0 2px 14px rgba(0,0,0,.05)", position:"relative", overflow:"hidden" }}
-              onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 16px 44px rgba(0,0,0,.12)";e.currentTarget.style.transform="translateY(-5px)";}}
-              onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 2px 14px rgba(0,0,0,.05)";e.currentTarget.style.transform="translateY(0)";}}
+            { type:"change", num:"01", title:"Change Readiness", desc:"For any major initiative — ERP, restructure, merger, culture shift. Assesses the ten dimensions that determine whether change sticks.", dims:["Leadership","Resistance","Capacity","Engagement","Planning"] },
+            { type:"ai",     num:"02", title:"AI Adoption Readiness", desc:"For organisations rolling out AI tools. Measures the human layer that most AI programmes overlook — trust, narrative, manager readiness, psychological safety.", dims:["Leadership","Ethics & Trust","Narrative","Manager Readiness","Culture"] },
+          ].map(c=>(
+            <div key={c.type} style={{ background:T.white, padding:"40px 36px" }}
+              onMouseEnter={e=>e.currentTarget.style.background=T.paper}
+              onMouseLeave={e=>e.currentTarget.style.background=T.white}
             >
-              <div style={{ position:"absolute", top:0, left:0, right:0, height:4, background:`linear-gradient(90deg, ${c.color}, ${c.color}40)` }}/>
-              <div style={{ fontSize:38, marginBottom:18 }}>{c.icon}</div>
-              <Badge color={c.color} bg={c.bg}>{c.title}</Badge>
-              <p style={{ color:T.mid, fontSize:14, lineHeight:1.75, margin:"16px 0 22px" }}>{c.desc}</p>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:28 }}>
-                {c.tags.map(t=><span key={t} style={{ fontSize:11, padding:"4px 11px", borderRadius:100, background:T.off, color:T.mid, fontWeight:500 }}>{t}</span>)}
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }}>
+                <div className="mono" style={{ fontSize:11, color:T.muted, letterSpacing:1 }}>{c.num}</div>
+                <Tag>{c.title}</Tag>
               </div>
-              <PrimaryBtn onClick={()=>onStart(c.type)}>Start this assessment →</PrimaryBtn>
+              <h3 style={{ fontSize:22, fontWeight:800, marginBottom:12, letterSpacing:-.4 }}>{c.title}</h3>
+              <p style={{ color:T.mid, fontSize:13.5, lineHeight:1.75, marginBottom:24 }}>{c.desc}</p>
+              <div style={{ marginBottom:28, paddingBottom:28, borderBottom:`1px solid ${T.rule}` }}>
+                {c.dims.map(d=>(
+                  <div key={d} style={{ display:"flex", alignItems:"center", gap:8, fontSize:12.5, color:T.body, marginBottom:7, fontWeight:500 }}>
+                    <div style={{ width:3, height:3, background:T.charL }}/>
+                    {d}
+                  </div>
+                ))}
+              </div>
+              <PrimaryBtn onClick={()=>onStart(c.type)}>Begin assessment</PrimaryBtn>
             </div>
           ))}
         </div>
       </section>
 
       {/* HOW IT WORKS */}
-      <section style={{ background:T.white, borderTop:`1px solid ${T.border}`, borderBottom:`1px solid ${T.border}`, padding:"76px 24px" }}>
-        <div style={{ maxWidth:860, margin:"0 auto" }}>
-          <div style={{ textAlign:"center", marginBottom:48 }}>
-            <Badge>How it works</Badge>
-            <h2 className="serif" style={{ fontSize:"clamp(26px,3.6vw,34px)", fontWeight:700, marginTop:14, letterSpacing:-.4 }}>From questions to clarity in 10 minutes</h2>
+      <section style={{ background:T.smoke, borderTop:`1px solid ${T.rule}`, borderBottom:`1px solid ${T.rule}`, padding:"80px 32px" }}>
+        <div style={{ maxWidth:1100, margin:"0 auto" }}>
+          <div style={{ marginBottom:52 }}>
+            <Tag>Process</Tag>
+            <h2 style={{ fontSize:"clamp(24px,3vw,32px)", fontWeight:800, marginTop:14, letterSpacing:-.5 }}>From input to insight in ten minutes</h2>
           </div>
-          <div className="two-col" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:22 }}>
+          <div className="three-col" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:1, background:T.rule }}>
             {[
-              ["1","Describe your initiative","Tell us the context — industry, size, what's changing. The AI uses it to make every insight specific to you."],
-              ["2","Rate 10 statements","Practitioner-grade questions distilled from ADKAR, Kotter, and 20 years of real engagements."],
-              ["3","Get your report by email","A full readiness analysis — findings, risks, 5 prioritised actions, and a 90-day success picture."],
-            ].map(([n,t,d],i)=>(
-              <div key={n} className={`fu${i}`} style={{ background:T.off, border:`1px solid ${T.border}`, borderRadius:14, padding:"26px 24px" }}>
-                <div className="serif" style={{ fontSize:30, fontWeight:700, color:T.gold, marginBottom:10 }}>{n}</div>
-                <div style={{ fontWeight:600, fontSize:15, marginBottom:7, color:T.ink }}>{t}</div>
-                <div style={{ fontSize:13, color:T.mid, lineHeight:1.7 }}>{d}</div>
+              ["01","Describe your initiative","Provide context — industry, organisation size, what is changing. The AI uses this to generate specific, non-generic analysis."],
+              ["02","Rate ten statements","Practitioner-designed questions drawn from ADKAR, Kotter, and two decades of real change engagements. Use the slider to respond."],
+              ["03","Receive your report","A full AI analysis — executive summary, key findings, risk areas, five prioritised actions, and a 90-day outlook — delivered by email."],
+            ].map(([n,t,d])=>(
+              <div key={n} style={{ background:T.white, padding:"32px 28px" }}>
+                <div className="mono" style={{ fontSize:11, color:T.muted, letterSpacing:1, marginBottom:16 }}>{n}</div>
+                <div style={{ fontWeight:700, fontSize:15, marginBottom:10, letterSpacing:-.2 }}>{t}</div>
+                <div style={{ fontSize:13, color:T.mid, lineHeight:1.75 }}>{d}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* SAMPLE REPORT TEASE */}
-      <section style={{ padding:"84px 24px" }}>
-        <div className="two-col" style={{ maxWidth:920, margin:"0 auto", display:"grid", gridTemplateColumns:"1fr 1fr", gap:48, alignItems:"center" }}>
+      {/* WHAT YOU RECEIVE */}
+      <section style={{ padding:"88px 32px" }}>
+        <div className="two-col" style={{ maxWidth:1100, margin:"0 auto", display:"grid", gridTemplateColumns:"1fr 1fr", gap:64, alignItems:"center" }}>
           <div>
-            <Badge color={T.amber} bg={T.amberL}>What you'll receive</Badge>
-            <h2 className="serif" style={{ fontSize:"clamp(26px,3.6vw,34px)", fontWeight:700, margin:"16px 0 16px", letterSpacing:-.4, lineHeight:1.25 }}>Not a score.<br/>A diagnosis.</h2>
-            <p style={{ color:T.mid, lineHeight:1.85, fontSize:14.5, marginBottom:24 }}>
-              Generic assessments tell you what you already know. Adovio's AI reads your specific scores against your industry and initiative — then tells you what they actually mean, what will break first, and exactly what to do about it.
-            </p>
-            <ul style={{ listStyle:"none", marginBottom:30 }}>
-              {["Executive summary that names the single most important issue","4 key findings with non-obvious implications","Critical risks with real-world consequences","5 prioritised actions — owner, timeline, rationale","A vivid 90-day picture of what good looks like"].map(item=>(
-                <li key={item} style={{ display:"flex", gap:10, fontSize:13.5, color:T.body, marginBottom:10, lineHeight:1.6 }}>
-                  <span style={{ color:T.sage, flexShrink:0 }}>✓</span>{item}
-                </li>
+            <Tag color={T.amber} bg={T.amberL}>Report Contents</Tag>
+            <h2 style={{ fontSize:"clamp(24px,3vw,32px)", fontWeight:800, margin:"14px 0 16px", letterSpacing:-.5, lineHeight:1.2 }}>Not a score.<br/>A diagnosis.</h2>
+            <p style={{ color:T.mid, lineHeight:1.85, fontSize:14, marginBottom:24 }}>Generic assessments confirm what you already suspect. Adovio's AI interprets your specific scores against your industry and initiative — then identifies what will break first and what to do about it.</p>
+            <div style={{ borderTop:`1px solid ${T.rule}` }}>
+              {["Executive summary identifying the single most critical issue","Four findings with non-obvious implications for your context","Risk areas with real-world consequences and root causes","Five prioritised actions — owner, timeline, rationale","A 90-day picture of what successful adoption looks like"].map((item,i)=>(
+                <div key={i} style={{ display:"flex", gap:12, padding:"12px 0", borderBottom:`1px solid ${T.rule}`, alignItems:"flex-start" }}>
+                  <div className="mono" style={{ fontSize:10, color:T.muted, paddingTop:2, flexShrink:0 }}>0{i+1}</div>
+                  <div style={{ fontSize:13, color:T.body, lineHeight:1.6 }}>{item}</div>
+                </div>
               ))}
-            </ul>
-            <PrimaryBtn onClick={()=>setSampleOpen(true)}>Preview the sample report →</PrimaryBtn>
+            </div>
+            <div style={{ marginTop:24 }}>
+              <PrimaryBtn onClick={()=>setSample(true)}>View sample report</PrimaryBtn>
+            </div>
           </div>
-          <div style={{ display:"flex", justifyContent:"center" }}>
-            <div style={{ background:T.white, border:`1px solid ${T.border}`, borderRadius:18, padding:"28px", boxShadow:"0 16px 48px rgba(0,0,0,.08)", width:"min(380px,100%)" }}>
-              <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>
-                <Gauge score={SAMPLE.overall} size={160}/>
+          <div>
+            <div style={{ border:`1px solid ${T.rule}`, background:T.white, padding:"28px" }}>
+              <div style={{ borderBottom:`1px solid ${T.rule}`, paddingBottom:16, marginBottom:20, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div>
+                  <div style={{ fontSize:10, fontWeight:700, letterSpacing:1.4, textTransform:"uppercase", color:T.muted, marginBottom:2 }}>Change Readiness Report</div>
+                  <div style={{ fontSize:14, fontWeight:700, color:T.ink }}>{SAMPLE.org}</div>
+                </div>
+                <div style={{ fontSize:11, color:T.muted }}>Sample</div>
               </div>
-              <div style={{ marginTop:14, paddingTop:16, borderTop:`1px solid ${T.border}` }}>
-                {SAMPLE.dims.slice(0,6).map((d,i)=><DimBar key={d.cat} {...d} index={i}/>)}
+              <div style={{ display:"flex", justifyContent:"center", marginBottom:20 }}>
+                <Dial score={SAMPLE.overall} size={148}/>
+              </div>
+              <div style={{ borderTop:`1px solid ${T.rule}`, paddingTop:16 }}>
+                {SAMPLE.dims.slice(0,7).map((d,i)=><ScoreBar key={d.cat} {...d} index={i}/>)}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FINAL CTA */}
-      <section style={{ background:`linear-gradient(155deg,${T.forest},${T.deep})`, padding:"76px 24px", textAlign:"center", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, opacity:.05, backgroundImage:`radial-gradient(circle,white 1px,transparent 1px)`, backgroundSize:"34px 34px" }}/>
+      {/* CTA */}
+      <section style={{ background:T.char, padding:"72px 32px", textAlign:"center", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", inset:0, backgroundImage:`linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px)`, backgroundSize:"48px 48px" }}/>
         <div style={{ position:"relative", zIndex:1 }}>
-          <h2 className="serif" style={{ fontSize:"clamp(26px,4vw,38px)", fontWeight:700, color:T.white, marginBottom:14, letterSpacing:-.4 }}>Know where you stand.</h2>
-          <p style={{ color:"rgba(255,255,255,.6)", marginBottom:34, fontSize:15 }}>10 minutes. Free forever. Built for the change community.</p>
-          <div style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
-            <button onClick={()=>onStart("change")} style={{ padding:"15px 34px", borderRadius:10, fontSize:15, fontWeight:600, background:T.white, color:T.forest, boxShadow:"0 6px 20px rgba(0,0,0,.25)", transition:"all .25s" }}
-              onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
-              onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}
-            >Change Readiness →</button>
-            <OutlineBtn light onClick={()=>onStart("ai")}>AI Adoption Readiness →</OutlineBtn>
+          <h2 style={{ fontSize:"clamp(24px,3.6vw,36px)", fontWeight:800, color:T.white, marginBottom:12, letterSpacing:-.6 }}>Know where you stand.</h2>
+          <p style={{ color:"rgba(255,255,255,.45)", marginBottom:32, fontSize:14.5 }}>Ten minutes. Free. Built for the change community.</p>
+          <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>
+            <button onClick={()=>onStart("change")} style={{ padding:"13px 32px", fontSize:13, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", background:T.white, color:T.char, border:"none", borderRadius:4, transition:"all .2s" }}
+              onMouseEnter={e=>e.currentTarget.style.background=T.smoke}
+              onMouseLeave={e=>e.currentTarget.style.background=T.white}
+            >Change Readiness</button>
+            <GhostBtn light onClick={()=>onStart("ai")}>AI Adoption Readiness</GhostBtn>
           </div>
         </div>
       </section>
 
-      <footer style={{ background:T.ink, padding:"28px 24px", textAlign:"center" }}>
-        <div className="serif" style={{ fontSize:18, fontWeight:700, color:T.white, marginBottom:4 }}>Ado<span style={{color:T.gold}}>vio</span></div>
-        <p style={{ fontSize:11.5, color:T.muted, letterSpacing:.6 }}>THE PATH TO ADOPTION · FREE FOR THE CHANGE COMMUNITY · ADOVIO.IO</p>
+      <footer style={{ background:T.ink, borderTop:`1px solid rgba(255,255,255,.06)`, padding:"28px 32px", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12 }}>
+        <div>
+          <div style={{ fontSize:15, fontWeight:800, color:T.white, letterSpacing:-.3 }}>ADOVIO</div>
+          <div style={{ fontSize:10, color:"rgba(255,255,255,.25)", letterSpacing:1.2, marginTop:2 }}>THE PATH TO ADOPTION</div>
+        </div>
+        <div style={{ fontSize:11, color:"rgba(255,255,255,.25)", letterSpacing:.5 }}>ADOVIO.IO · FREE FOR THE CHANGE COMMUNITY</div>
       </footer>
     </div>
   );
 }
 
-/* ── Context step ───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   CONTEXT STEP
+══════════════════════════════════════════════════════════ */
 function ContextStep({ type, context, setContext, onNext, onBack }) {
-  const accent = type==="change"?T.forest:T.blue;
   const valid = context.orgName&&context.role&&context.changeDesc;
   return (
-    <div style={{ maxWidth:640, margin:"0 auto", padding:"52px 24px" }}>
+    <div style={{ maxWidth:620, margin:"0 auto", padding:"56px 24px" }}>
       <Steps current={0}/>
-      <Badge color={accent} bg={type==="change"?T.lime:T.blueL}>{type==="change"?"Change Readiness":"AI Adoption Readiness"}</Badge>
-      <h2 className="serif" style={{ fontSize:31, fontWeight:700, margin:"14px 0 6px", letterSpacing:-.4 }}>Let's set the context</h2>
-      <p style={{ color:T.mid, fontSize:14, marginBottom:38 }}>This is what makes your report specific — not generic. Takes ~1 minute.</p>
+      <Tag>{type==="change"?"Change Readiness":"AI Adoption Readiness"}</Tag>
+      <h2 style={{ fontSize:28, fontWeight:800, margin:"14px 0 6px", letterSpacing:-.5 }}>Set the context</h2>
+      <p style={{ color:T.mid, fontSize:13.5, marginBottom:36, lineHeight:1.65 }}>This is what transforms your report from generic to specific. Takes about one minute.</p>
       <div style={{ display:"flex", flexDirection:"column", gap:22 }}>
-        <TextInput label="Organisation or Initiative Name" required value={context.orgName} onChange={v=>setContext(c=>({...c,orgName:v}))} placeholder="e.g. Acme Corp — ERP Rollout 2026"/>
-        <TextInput label="Your Role" required value={context.role} onChange={v=>setContext(c=>({...c,role:v}))} placeholder="e.g. Change Manager, HR Director, Project Sponsor"/>
+        <TextInput label="Organisation or initiative name" required value={context.orgName} onChange={v=>setContext(c=>({...c,orgName:v}))} placeholder="e.g. Acme Corp — ERP Rollout 2026"/>
+        <TextInput label="Your role" required value={context.role} onChange={v=>setContext(c=>({...c,role:v}))} placeholder="e.g. Change Manager, HR Director, Project Sponsor"/>
         <div>
-          <Label required>Briefly describe the change or initiative</Label>
+          <FieldLabel required>Briefly describe the change or initiative</FieldLabel>
           <textarea value={context.changeDesc} onChange={e=>setContext(c=>({...c,changeDesc:e.target.value}))}
-            placeholder={type==="change"?"e.g. Implementing a new ERP system across 3 business units over 18 months...":"e.g. Rolling out Microsoft Copilot to 500 employees in Q3..."}
-            rows={3} style={{ width:"100%", padding:"13px 15px", borderRadius:9, fontSize:14, border:`1.5px solid ${T.border}`, background:T.white, color:T.ink, outline:"none", resize:"vertical", transition:"border-color .2s" }}
-            onFocus={e=>e.target.style.borderColor=accent} onBlur={e=>e.target.style.borderColor=T.border}/>
+            placeholder={type==="change"?"e.g. Implementing a new ERP system across three business units over 18 months...":"e.g. Rolling out Microsoft Copilot to 500 employees in Q3..."}
+            rows={3} style={{ width:"100%", padding:"12px 14px", borderRadius:4, fontSize:14, border:`1px solid ${T.border}`, background:T.white, color:T.ink, outline:"none", resize:"vertical", transition:"border-color .2s" }}
+            onFocus={e=>e.target.style.borderColor=T.char} onBlur={e=>e.target.style.borderColor=T.border}/>
         </div>
         <div className="two-col" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-          {[["Industry",["Financial Services","Healthcare","Technology","Government","Retail","Manufacturing","Education","Professional Services","Other"],"industry"],["Organisation Size",["1–50","51–200","201–1,000","1,001–5,000","5,000+"],"size"]].map(([lbl,opts,key])=>(
+          {[["Industry",["Financial Services","Healthcare","Technology","Government","Retail","Manufacturing","Education","Professional Services","Other"],"industry"],["Organisation size",["1–50","51–200","201–1,000","1,001–5,000","5,000+"],"size"]].map(([lbl,opts,key])=>(
             <div key={key}>
-              <Label>{lbl}</Label>
-              <select value={context[key]} onChange={e=>setContext(c=>({...c,[key]:e.target.value}))} style={{ width:"100%", padding:"13px 15px", borderRadius:9, fontSize:14, border:`1.5px solid ${T.border}`, background:T.white, color:T.body, outline:"none" }}>
-                <option value="">Select {lbl.toLowerCase()}</option>
+              <FieldLabel>{lbl}</FieldLabel>
+              <select value={context[key]} onChange={e=>setContext(c=>({...c,[key]:e.target.value}))} style={{ width:"100%", padding:"12px 14px", borderRadius:4, fontSize:13.5, border:`1px solid ${T.border}`, background:T.white, color:T.body, outline:"none" }}>
+                <option value="">Select</option>
                 {opts.map(o=><option key={o} value={o}>{key==="size"?`${o} employees`:o}</option>)}
               </select>
             </div>
           ))}
         </div>
       </div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:42 }}>
-        <OutlineBtn onClick={onBack}>← Back</OutlineBtn>
-        <PrimaryBtn onClick={onNext} disabled={!valid}>Continue →</PrimaryBtn>
+      <div style={{ display:"flex", justifyContent:"space-between", marginTop:44 }}>
+        <GhostBtn onClick={onBack}>Back</GhostBtn>
+        <PrimaryBtn onClick={onNext} disabled={!valid}>Continue</PrimaryBtn>
       </div>
     </div>
   );
 }
 
-/* ── Slider question ────────────────────────────────────────── */
-function SliderQuestion({ q, index, value, onChange, accent, isLast }) {
+/* ═══════════════════════════════════════════════════════════
+   QUESTIONS STEP
+══════════════════════════════════════════════════════════ */
+function SliderQ({ q, index, value, onChange, isLast }) {
   const answered = value !== undefined;
-  const display = answered ? value : 3;
-  const color = answered ? scoreColor(display) : T.muted;
-  const pct = ((display - 1) / 4) * 100;
-  const track = answered
-    ? `linear-gradient(90deg, ${color} 0%, ${color} ${pct}%, ${T.light} ${pct}%)`
-    : T.light;
+  const display  = answered ? value : 3;
+  const color    = answered ? bandColor(display) : T.border;
+  const pct      = ((display-1)/4)*100;
+  const fillGrad = answered
+    ? `linear-gradient(90deg, ${color} 0%, ${color} ${pct}%, ${T.rule} ${pct}%)`
+    : T.rule;
   const labels = ["Strongly Disagree","Disagree","Neutral","Agree","Strongly Agree"];
 
   return (
-    <div style={{ padding:"26px 0", borderBottom:!isLast?`1px solid ${T.border}`:"none", animation:`fadeUp .4s ${index*.04}s both` }}>
-      <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:12 }}>
-        <span style={{ width:24, height:24, borderRadius:"50%", background:answered?accent:T.light, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:answered?T.white:T.muted, flexShrink:0, transition:"all .2s" }}>{answered?"✓":index+1}</span>
-        <Badge color={T.mid} bg={T.off}>{q.cat}</Badge>
-        {answered && <span style={{ marginLeft:"auto", fontSize:12, fontWeight:700, color, transition:"color .2s" }}>{labels[display-1]}</span>}
+    <div style={{ padding:"28px 0", borderBottom:!isLast?`1px solid ${T.rule}`:"none", animation:`fadeUp .4s ${index*.04}s both` }}>
+      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+        <div className="mono" style={{ fontSize:10, color:answered?T.char:T.muted, letterSpacing:1, minWidth:22 }}>{answered?`0${index+1} ✓`:`0${index+1}`}</div>
+        <Tag color={T.mid} bg={T.smoke}>{q.cat}</Tag>
+        {answered && <span style={{ marginLeft:"auto", fontSize:11, fontWeight:600, color, letterSpacing:.3 }}>{labels[display-1]}</span>}
       </div>
-      <p style={{ fontSize:14.5, lineHeight:1.7, color:T.body, marginBottom:14, paddingLeft:34 }}>{q.text}</p>
-
-      <div style={{ paddingLeft:34 }}>
-        <input
-          type="range" min={1} max={5} step={1}
-          value={display}
+      <p style={{ fontSize:14.5, lineHeight:1.7, color:T.body, marginBottom:18, paddingLeft:32 }}>{q.text}</p>
+      <div style={{ paddingLeft:32 }}>
+        <input type="range" min={1} max={5} step={1} value={display} className="rslider"
           onChange={e=>onChange(parseInt(e.target.value))}
           onMouseDown={()=>{ if(!answered) onChange(3); }}
           onTouchStart={()=>{ if(!answered) onChange(3); }}
-          className="rate-slider"
-          style={{ "--track":track, "--thumb":color }}
+          style={{ "--fill":fillGrad, "--thumb":color }}
           aria-label={`${q.cat}: ${q.text}`}
         />
-        <div style={{ display:"flex", justifyContent:"space-between", marginTop:2 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", marginTop:0 }}>
           {[1,2,3,4,5].map(v=>(
-            <button key={v} onClick={()=>onChange(v)} style={{
-              width:34, textAlign:v===1?"left":v===5?"right":"center",
-              fontSize:11, fontWeight:answered&&display===v?800:500,
-              color:answered&&display===v?color:T.muted,
-              transition:"all .15s", padding:"4px 0",
-            }}>{v}</button>
+            <button key={v} onClick={()=>onChange(v)} style={{ fontSize:11, fontWeight:answered&&display===v?800:500, color:answered&&display===v?color:T.muted, padding:"4px 2px", minWidth:28, textAlign:v===1?"left":v===5?"right":"center", transition:"color .15s" }}>{v}</button>
           ))}
         </div>
-        {!answered && <div style={{ fontSize:11.5, color:T.muted, marginTop:2, display:"flex", alignItems:"center", gap:6 }}><span style={{fontSize:13}}>👆</span> Drag the slider or tap a number</div>}
+        {!answered && <div style={{ fontSize:11, color:T.muted, marginTop:6, letterSpacing:.2 }}>Drag or tap a number to respond</div>}
       </div>
     </div>
   );
 }
 
-/* ── Questions step ─────────────────────────────────────────── */
 function QuestionsStep({ type, answers, setAnswers, onNext, onBack }) {
   const questions = type==="change"?CHANGE_Qs:AI_Qs;
-  const accent = type==="change"?T.forest:T.blue;
-  const answered = questions.filter(q=>answers[q.id]).length;
-  const allDone = answered===questions.length;
+  const answered  = questions.filter(q=>answers[q.id]).length;
+  const allDone   = answered===questions.length;
   return (
-    <div style={{ maxWidth:700, margin:"0 auto", padding:"52px 24px" }}>
+    <div style={{ maxWidth:700, margin:"0 auto", padding:"56px 24px" }}>
       <Steps current={1}/>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:10, marginBottom:18 }}>
         <div>
-          <Badge color={accent} bg={type==="change"?T.lime:T.blueL}>{type==="change"?"Change Readiness":"AI Adoption Readiness"}</Badge>
-          <h2 className="serif" style={{ fontSize:29, fontWeight:700, margin:"12px 0 2px", letterSpacing:-.4 }}>Slide to rate each statement</h2>
-          <p style={{ color:T.mid, fontSize:13, marginTop:4 }}>Go with your gut — your first instinct is usually the most accurate signal.</p>
+          <Tag>{type==="change"?"Change Readiness":"AI Adoption Readiness"}</Tag>
+          <h2 style={{ fontSize:26, fontWeight:800, margin:"12px 0 2px", letterSpacing:-.5 }}>Rate each statement</h2>
+          <p style={{ color:T.mid, fontSize:12.5, marginTop:4 }}>Go with your first instinct. Drag the slider or tap a number.</p>
         </div>
-        <span className="mono" style={{ fontSize:13, color:accent, fontWeight:600 }}>{answered}/{questions.length}</span>
+        <div className="mono" style={{ fontSize:12, color:T.char, fontWeight:700 }}>{answered}/{questions.length}</div>
       </div>
-      <div style={{ height:7, background:T.border, borderRadius:4, marginBottom:38, overflow:"hidden" }}>
-        <div style={{ height:"100%", width:`${(answered/questions.length)*100}%`, borderRadius:4, background:`linear-gradient(90deg,${accent},${T.sage})`, transition:"width .35s cubic-bezier(.22,1,.36,1)" }}/>
+      <div style={{ height:3, background:T.rule, marginBottom:40 }}>
+        <div style={{ height:"100%", width:`${(answered/questions.length)*100}%`, background:T.char, transition:"width .3s" }}/>
       </div>
       {questions.map((q,i)=>(
-        <SliderQuestion key={q.id} q={q} index={i} isLast={i===questions.length-1}
-          value={answers[q.id]} accent={accent}
+        <SliderQ key={q.id} q={q} index={i} isLast={i===questions.length-1}
+          value={answers[q.id]}
           onChange={v=>setAnswers(a=>({...a,[q.id]:v}))}/>
       ))}
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:42 }}>
-        <OutlineBtn onClick={onBack}>← Back</OutlineBtn>
-        <PrimaryBtn onClick={onNext} disabled={!allDone} glow={allDone}>{allDone?"Continue — almost done →":`${questions.length-answered} remaining`}</PrimaryBtn>
+      <div style={{ display:"flex", justifyContent:"space-between", marginTop:44 }}>
+        <GhostBtn onClick={onBack}>Back</GhostBtn>
+        <PrimaryBtn onClick={onNext} disabled={!allDone}>{allDone?"Continue":""+`${questions.length-answered} remaining`}</PrimaryBtn>
       </div>
     </div>
   );
 }
 
-/* ── Email step (with live score teaser) ────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   EMAIL STEP
+══════════════════════════════════════════════════════════ */
 function EmailStep({ type, answers, email, setEmail, name, setName, onNext, onBack }) {
   const valid = email&&email.includes("@")&&name;
   const questions = type==="change"?CHANGE_Qs:AI_Qs;
-  const overall = avgScore(answers,questions);
+  const overall = avg(answers,questions);
   return (
-    <div style={{ maxWidth:540, margin:"0 auto", padding:"52px 24px" }}>
+    <div style={{ maxWidth:520, margin:"0 auto", padding:"56px 24px" }}>
       <Steps current={2}/>
-      <div style={{ textAlign:"center", marginBottom:30 }}>
-        <h2 className="serif" style={{ fontSize:30, fontWeight:700, marginBottom:8, letterSpacing:-.4 }}>Your score is ready.</h2>
-        <p style={{ color:T.mid, fontSize:14, lineHeight:1.7 }}>Here's your overall readiness — the full AI analysis lands in your inbox.</p>
-      </div>
+      <Tag>Assessment complete</Tag>
+      <h2 style={{ fontSize:28, fontWeight:800, margin:"14px 0 6px", letterSpacing:-.5 }}>Your score is ready.</h2>
+      <p style={{ color:T.mid, fontSize:13.5, marginBottom:30 }}>The full AI analysis will be delivered to your inbox.</p>
 
-      {/* live score teaser */}
-      <div className="fu" style={{ background:T.white, border:`1px solid ${T.border}`, borderRadius:16, padding:"26px", marginBottom:24, textAlign:"center", boxShadow:"0 8px 32px rgba(0,0,0,.07)" }}>
-        <Gauge score={overall} size={160}/>
-        <p style={{ fontSize:12.5, color:T.muted, marginTop:14, lineHeight:1.6 }}>
-          Your full report — executive summary, key findings, risk areas, and 5 recommended actions — is generated by AI and delivered by email.
+      {/* Score reveal */}
+      <div style={{ border:`1px solid ${T.rule}`, background:T.white, padding:"28px", textAlign:"center", marginBottom:24 }}>
+        <Dial score={overall} size={158}/>
+        <p style={{ fontSize:12, color:T.muted, marginTop:16, lineHeight:1.65 }}>
+          Your full report — executive summary, findings, risk areas, and five prioritised actions — is generated by AI and tailored to your specific scores and context.
         </p>
       </div>
 
-      <div style={{ background:T.white, border:`1px solid ${T.border}`, borderRadius:14, padding:"30px", display:"flex", flexDirection:"column", gap:20, boxShadow:"0 2px 12px rgba(0,0,0,.05)" }}>
-        <TextInput label="Your Full Name" required value={name} onChange={setName} placeholder="e.g. Sarah Johnson"/>
-        <TextInput label="Work Email Address" required type="email" value={email} onChange={setEmail} placeholder="e.g. sarah@company.com"/>
-        <div style={{ padding:"11px 15px", borderRadius:9, background:T.off, border:`1px solid ${T.border}`, fontSize:11.5, color:T.muted, lineHeight:1.6 }}>
-          🔒 Used only to send this report and occasional change-community insights. No spam, ever. Unsubscribe anytime.
+      <div style={{ border:`1px solid ${T.rule}`, background:T.white, padding:"28px", display:"flex", flexDirection:"column", gap:18, marginBottom:0 }}>
+        <TextInput label="Full name" required value={name} onChange={setName} placeholder="e.g. Sarah Johnson"/>
+        <TextInput label="Work email" required type="email" value={email} onChange={setEmail} placeholder="e.g. sarah@company.com"/>
+        <div style={{ padding:"10px 14px", background:T.smoke, border:`1px solid ${T.rule}`, fontSize:11.5, color:T.muted, lineHeight:1.65 }}>
+          Used only to send this report and occasional change-community insights. No spam, ever.
         </div>
       </div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:32 }}>
-        <OutlineBtn onClick={onBack}>← Back</OutlineBtn>
-        <PrimaryBtn onClick={onNext} disabled={!valid} glow={valid}>Send my full report →</PrimaryBtn>
+      <div style={{ display:"flex", justifyContent:"space-between", marginTop:32 }}>
+        <GhostBtn onClick={onBack}>Back</GhostBtn>
+        <PrimaryBtn onClick={onNext} disabled={!valid}>Send my report</PrimaryBtn>
       </div>
     </div>
   );
 }
 
-/* ── Generating ─────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   GENERATING
+══════════════════════════════════════════════════════════ */
 function GeneratingScreen({ type }) {
-  const steps = ["Analysing your responses across all dimensions…","Reading your scores against your industry…","Identifying risk patterns and hidden gaps…","Writing your personalised recommendations…","Sending your report…"];
+  const steps = ["Analysing your responses across all dimensions","Reading your scores against industry benchmarks","Identifying risk patterns and gaps","Writing your personalised recommendations","Preparing your report for delivery"];
   const [step, setStep] = useState(0);
   useEffect(()=>{ const t=setInterval(()=>setStep(s=>Math.min(s+1,steps.length-1)),1900); return()=>clearInterval(t); },[]);
-  const accent = type==="change"?T.forest:T.blue;
   return (
-    <div style={{ minHeight:"62vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:30, padding:40 }}>
-      <div style={{ position:"relative", width:64, height:64 }}>
-        <div style={{ position:"absolute", inset:0, borderRadius:"50%", border:`3px solid ${T.border}` }}/>
-        <div style={{ position:"absolute", inset:0, borderRadius:"50%", border:`3px solid transparent`, borderTopColor:accent, animation:"spin .9s linear infinite" }}/>
-        <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🌱</div>
-      </div>
-      <div style={{ textAlign:"center", maxWidth:400 }}>
-        <h3 className="serif" style={{ fontSize:25, fontWeight:700, marginBottom:10 }}>Generating your report</h3>
-        <p style={{ fontSize:13.5, color:accent, fontWeight:500, minHeight:22 }}>{steps[step]}</p>
-        <div style={{ display:"flex", gap:5, justifyContent:"center", marginTop:18 }}>
-          {steps.map((_,i)=><div key={i} style={{ width:i===step?22:6, height:6, borderRadius:3, background:i<=step?accent:T.border, transition:"all .3s" }}/>)}
+    <div style={{ minHeight:"60vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:28, padding:40 }}>
+      <div style={{ width:40, height:40, border:`2px solid ${T.rule}`, borderTopColor:T.char, borderRadius:"50%", animation:"spin .85s linear infinite" }}/>
+      <div style={{ textAlign:"center", maxWidth:380 }}>
+        <h3 style={{ fontSize:20, fontWeight:800, letterSpacing:-.4, marginBottom:10 }}>Generating your report</h3>
+        <p style={{ fontSize:13, color:T.mid, fontWeight:500, minHeight:20 }}>{steps[step]}</p>
+        <div style={{ display:"flex", gap:4, justifyContent:"center", marginTop:18 }}>
+          {steps.map((_,i)=><div key={i} style={{ width:i===step?20:5, height:3, background:i<=step?T.char:T.rule, transition:"all .3s" }}/>)}
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Confirmation ───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   CONFIRMATION
+══════════════════════════════════════════════════════════ */
 function ConfirmationScreen({ data, onRestart, onOther }) {
   const { respondent, type, overall, level } = data;
   const isChange = type==="change";
-  const accent = isChange?T.forest:T.blue;
-  const accentBg = isChange?T.lime:T.blueL;
+  const lv = getLevel(overall);
   return (
-    <div style={{ maxWidth:600, margin:"0 auto", padding:"72px 24px", textAlign:"center" }}>
-      <div className="fu" style={{ width:84, height:84, borderRadius:"50%", background:T.lime, border:`3px solid ${T.sage}`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 28px", fontSize:38 }}>✅</div>
-      <h1 className="serif fu1" style={{ fontSize:36, fontWeight:700, marginBottom:12, letterSpacing:-.6, color:T.ink }}>Your report is on its way</h1>
-      <p className="fu2" style={{ fontSize:15.5, color:T.mid, lineHeight:1.75, marginBottom:34 }}>
-        Sent to <strong style={{color:T.ink}}>{respondent.email}</strong> — it should arrive within a couple of minutes.
+    <div style={{ maxWidth:580, margin:"0 auto", padding:"72px 24px", textAlign:"center" }}>
+      <div style={{ width:56, height:56, background:T.char, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 28px" }}>
+        <div style={{ width:20, height:20, border:`2px solid white`, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ width:6, height:10, border:`2px solid white`, borderTop:"none", borderLeft:"none", transform:"rotate(45deg)", marginTop:-2 }}/>
+        </div>
+      </div>
+
+      <h1 style={{ fontSize:32, fontWeight:800, marginBottom:12, letterSpacing:-.6, color:T.ink }}>Report on its way.</h1>
+      <p style={{ fontSize:15, color:T.mid, lineHeight:1.75, marginBottom:36 }}>
+        Sent to <strong style={{color:T.ink}}>{respondent.email}</strong>. Should arrive within two minutes — check your spam folder if it does not appear.
       </p>
 
-      <div className="fu2" style={{ background:T.white, borderRadius:18, border:`1px solid ${T.border}`, padding:"30px", marginBottom:28, boxShadow:"0 8px 32px rgba(0,0,0,.07)" }}>
-        <Gauge score={overall} size={170}/>
-        <p style={{ fontSize:13, color:T.mid, marginTop:14, lineHeight:1.65 }}>
-          Full analysis, key findings, risk areas, and 5 recommended actions are in your email — as a PDF you can save and share.
-        </p>
+      <div style={{ border:`1px solid ${T.rule}`, background:T.white, padding:"28px", marginBottom:24, textAlign:"center" }}>
+        <Dial score={overall} size={160}/>
+        <p style={{ fontSize:12.5, color:T.muted, marginTop:16, lineHeight:1.65 }}>Full analysis, findings, risk areas, and five recommended actions are in your email.</p>
       </div>
 
-      <div className="fu3" style={{ background:`linear-gradient(135deg,${T.forest}09,${T.sage}09)`, borderRadius:14, border:`1px solid ${T.sage}40`, padding:"26px 30px", marginBottom:24, textAlign:"left", display:"flex", gap:16, alignItems:"center", flexWrap:"wrap" }}>
-        <div style={{ fontSize:28 }}>💼</div>
-        <div style={{ flex:1, minWidth:200 }}>
-          <div className="serif" style={{ fontSize:16, fontWeight:700, color:T.forest, marginBottom:4 }}>Found this valuable?</div>
-          <p style={{ fontSize:12.5, color:T.mid, lineHeight:1.6 }}>Connect on LinkedIn for weekly insights on change management and AI adoption — from the practitioner who built Adovio.</p>
+      <div style={{ border:`1px solid ${T.rule}`, padding:"22px 26px", marginBottom:20, textAlign:"left", display:"flex", gap:20, alignItems:"center", flexWrap:"wrap" }}>
+        <div style={{ flex:1, minWidth:180 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:T.ink, marginBottom:4 }}>Connect on LinkedIn</div>
+          <p style={{ fontSize:12, color:T.mid, lineHeight:1.6 }}>Weekly insights on change management and AI adoption from the practitioner who built Adovio.</p>
         </div>
-        <a href="https://www.linkedin.com/in/divyamkaushik/" target="_blank" rel="noreferrer" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"11px 22px", borderRadius:9, background:T.forest, color:T.white, fontSize:13, fontWeight:600, textDecoration:"none", whiteSpace:"nowrap", boxShadow:"0 3px 10px rgba(27,67,50,.3)" }}>Connect →</a>
+        <a href="https://www.linkedin.com/in/divyamkaushik/" target="_blank" rel="noreferrer" style={{ display:"inline-block", padding:"10px 22px", background:T.char, color:T.white, fontSize:12, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", textDecoration:"none", transition:"background .2s" }}>Connect</a>
       </div>
 
-      <div className="fu3" style={{ background:T.goldL, borderRadius:11, border:`1px solid ${T.gold}40`, padding:"13px 18px", marginBottom:30, display:"flex", gap:10, alignItems:"center", textAlign:"left" }}>
-        <span style={{ fontSize:18 }}>💡</span>
-        <p style={{ fontSize:12.5, color:T.mid, lineHeight:1.5 }}>Can't find it? Check your <strong>spam or promotions folder</strong> — first deliveries sometimes land there.</p>
+      <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>
+        <PrimaryBtn onClick={onOther}>{isChange?"AI Adoption Assessment":"Change Readiness Assessment"}</PrimaryBtn>
+        <GhostBtn onClick={onRestart}>Back to home</GhostBtn>
       </div>
 
-      <div className="fu4" style={{ display:"flex", gap:14, justifyContent:"center", flexWrap:"wrap" }}>
-        <PrimaryBtn onClick={onOther}>{isChange?"Take the AI Adoption assessment →":"Take the Change Readiness assessment →"}</PrimaryBtn>
-        <OutlineBtn onClick={onRestart}>Back to home</OutlineBtn>
-      </div>
-
-      <div style={{ marginTop:48, paddingTop:24, borderTop:`1px solid ${T.border}` }}>
-        <div className="serif" style={{ fontSize:16, fontWeight:700, color:T.ink }}>Ado<span style={{ color:T.gold }}>vio</span></div>
-        <p style={{ fontSize:11, color:T.muted, marginTop:4 }}>The path to adoption · adovio.io</p>
+      <div style={{ marginTop:48, paddingTop:24, borderTop:`1px solid ${T.rule}` }}>
+        <div style={{ fontSize:13, fontWeight:800, color:T.ink, letterSpacing:-.2 }}>ADOVIO</div>
+        <p style={{ fontSize:10.5, color:T.muted, marginTop:3, letterSpacing:.5 }}>THE PATH TO ADOPTION · ADOVIO.IO</p>
       </div>
     </div>
   );
 }
 
-/* ── App ────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   APP
+══════════════════════════════════════════════════════════ */
 export default function App() {
-  const [screen, setScreen]         = useState("home");
-  const [type, setType]             = useState(null);
-  const [context, setContext]       = useState({ orgName:"", role:"", changeDesc:"", industry:"", size:"" });
-  const [answers, setAnswers]       = useState({});
-  const [email, setEmail]           = useState("");
-  const [name, setName]             = useState("");
+  const [screen, setScreen]           = useState("home");
+  const [type, setType]               = useState(null);
+  const [context, setContext]         = useState({ orgName:"", role:"", changeDesc:"", industry:"", size:"" });
+  const [answers, setAnswers]         = useState({});
+  const [email, setEmail]             = useState("");
+  const [name, setName]               = useState("");
   const [confirmData, setConfirmData] = useState(null);
 
   useEffect(()=>{
@@ -816,69 +807,47 @@ export default function App() {
   const handleGenerate = async () => {
     setScreen("generating"); window.scrollTo(0,0);
     const questions = type==="change"?CHANGE_Qs:AI_Qs;
-    const overall = avgScore(answers,questions);
-    const lv = getLevel(overall);
-    const scored = questions.map(q=>({ cat:q.cat, score:answers[q.id]||0, text:q.text }));
+    const overall   = avg(answers,questions);
+    const lv        = getLevel(overall);
+    const scored    = questions.map(q=>({ cat:q.cat, score:answers[q.id]||0, text:q.text }));
     const { system, user } = buildPrompt(type, context, answers, questions, overall, lv);
 
     try {
       const genRes = await fetch("/api/generate", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify({
-          model:"claude-sonnet-4-6",
-          max_tokens:1500,
-          system,
-          messages:[{ role:"user", content:user }]
-        }),
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:1500, system, messages:[{ role:"user", content:user }] }),
       });
-
       const genRaw = await genRes.text();
       let genData;
-      try { genData = JSON.parse(genRaw); } catch(e) { throw new Error("Invalid response from AI"); }
+      try { genData=JSON.parse(genRaw); } catch(e){ throw new Error("Invalid AI response"); }
       const aiText = genData?.content?.[0]?.text || "Unable to generate report.";
 
       try {
         await fetch("/api/email", {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body:JSON.stringify({
-            to: email,
-            name,
-            orgName: context.orgName,
-            type,
-            overall: overall.toFixed(2),
-            level: lv.label,
-            aiText,
-            scores: scored,
-          }),
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify({ to:email, name, orgName:context.orgName, type, overall:overall.toFixed(2), level:lv.label, aiText, scores:scored }),
         });
-      } catch(emailErr) {
-        console.error("Email send failed:", emailErr);
-      }
+      } catch(emailErr) { console.error("Email failed:", emailErr); }
 
       setConfirmData({ context, respondent:{ name, email, role:context.role }, type, overall, level:lv.label });
-      setScreen("confirmation");
-      window.scrollTo(0,0);
-
+      setScreen("confirmation"); window.scrollTo(0,0);
     } catch(err) {
-      console.error("Generation error:", err);
-      setConfirmData({ context, respondent:{ name, email, role:context.role }, type, overall, level:lv.label });
-      setScreen("confirmation");
-      window.scrollTo(0,0);
+      console.error("Error:", err);
+      setConfirmData({ context, respondent:{ name, email, role:context.role }, type, overall:0, level:"" });
+      setScreen("confirmation"); window.scrollTo(0,0);
     }
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:T.off }}>
-      <nav style={{ position:"sticky", top:0, zIndex:100, background:"rgba(248,247,244,.85)", backdropFilter:"blur(14px)", WebkitBackdropFilter:"blur(14px)", borderBottom:`1px solid ${T.border}`, padding:"0 26px", height:62, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <button onClick={()=>{ setScreen("home"); window.scrollTo(0,0); }} className="serif" style={{ fontSize:21, fontWeight:700, color:T.forest, letterSpacing:-.3 }}>
-          Ado<span style={{ color:T.gold }}>vio</span>
+    <div style={{ minHeight:"100vh", background:T.paper }}>
+      <nav style={{ position:"sticky", top:0, zIndex:100, background:"rgba(250,250,249,.92)", backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)", borderBottom:`1px solid ${T.rule}`, padding:"0 28px", height:58, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <button onClick={()=>{ setScreen("home"); window.scrollTo(0,0); }} style={{ fontSize:14, fontWeight:800, color:T.char, letterSpacing:.5, textTransform:"uppercase" }}>
+          Adovio
         </button>
-        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-          <button onClick={()=>resetFor("change")} style={{ padding:"8px 16px", borderRadius:8, fontSize:13, fontWeight:500, color:T.forest, transition:"background .15s" }}
-            onMouseEnter={e=>e.currentTarget.style.background=T.lime}
-            onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+        <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+          <button onClick={()=>resetFor("change")} style={{ padding:"7px 14px", fontSize:11.5, fontWeight:700, letterSpacing:.6, textTransform:"uppercase", color:T.mid, transition:"color .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.color=T.char}
+            onMouseLeave={e=>e.currentTarget.style.color=T.mid}
           >Change Readiness</button>
           <PrimaryBtn small onClick={()=>resetFor("ai")}>AI Readiness</PrimaryBtn>
         </div>
