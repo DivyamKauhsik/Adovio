@@ -552,12 +552,26 @@ function HomeScreen({ onStart }) {
         </div>
       </section>
 
-      <footer style={{ background:T.ink, borderTop:`1px solid rgba(255,255,255,.06)`, padding:"28px 32px", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12 }}>
+      <footer style={{ background:T.ink, borderTop:`1px solid rgba(255,255,255,.06)`, padding:"28px 32px", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16 }}>
         <div>
           <div style={{ fontSize:15, fontWeight:800, color:T.white, letterSpacing:-.3 }}>ADOVIO</div>
           <div style={{ fontSize:10, color:"rgba(255,255,255,.25)", letterSpacing:1.2, marginTop:2 }}>THE PATH TO ADOPTION</div>
         </div>
-        <div style={{ fontSize:11, color:"rgba(255,255,255,.25)", letterSpacing:.5 }}>ADOVIO.IO · FREE FOR THE CHANGE COMMUNITY</div>
+        <div style={{ textAlign:"center" }}>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,.25)", letterSpacing:.5 }}>ADOVIO.IO · FREE FOR THE CHANGE COMMUNITY</div>
+        </div>
+        <div style={{ textAlign:"right" }}>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,.35)", letterSpacing:.5, marginBottom:4 }}>BUILT BY</div>
+          <a href="https://www.linkedin.com/in/divyamkaushik/" target="_blank" rel="noreferrer" style={{
+            fontSize:12, fontWeight:700, color:T.white, textDecoration:"none",
+            letterSpacing:.3, borderBottom:"1px solid rgba(255,255,255,.2)",
+            paddingBottom:1, transition:"border-color .2s",
+          }}
+            onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(255,255,255,.6)"}
+            onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(255,255,255,.2)"}
+          >Divyam Kaushik</a>
+          <div style={{ fontSize:10, color:"rgba(255,255,255,.25)", letterSpacing:.5, marginTop:2 }}>GLOBAL OCM LEADER · DELOITTE</div>
+        </div>
       </footer>
     </div>
   );
