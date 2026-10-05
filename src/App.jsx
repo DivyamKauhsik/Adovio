@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ARTICLES } from "./articles.js";
 
 /* ─────────────────────────────────────────────────────────────
    ADOVIO v3 — McKinsey Design Language
@@ -36,6 +37,10 @@ const T = {
   goldL:   "#FEF3C7",
   greenL:  "#F0FDF4",
 };
+
+/* ── Site config ───────────────────────────────────────────── */
+const DEBRIEF_PRICE = "US$95"; // ← change the debrief price here
+const DEBRIEF_BOOKING_URL = ""; // ← paste your Stripe payment link or Calendly URL here; empty = "opening soon"
 
 /* ── Questions ─────────────────────────────────────────────── */
 const CHANGE_Qs = [
@@ -175,6 +180,9 @@ const CSS = `
     .hero-grid { grid-template-columns:1fr !important; }
     .two-col   { grid-template-columns:1fr !important; }
     .three-col { grid-template-columns:1fr !important; }
+  }
+  @media (max-width:640px) {
+    .navhide { display:none !important; }
   }
 `;
 
@@ -349,11 +357,192 @@ function SampleModal({ open, onClose, onStart }) {
   );
 }
 
+/* ── Inline rich text (**bold**) ───────────────────────────── */
+function rich(text) {
+  const parts = String(text).split(/\*\*(.+?)\*\*/g);
+  return parts.map((p, i) =>
+    i % 2 === 1 ? <strong key={i} style={{ color: T.ink }}>{p}</strong> : <span key={i}>{p}</span>
+  );
+}
+
+/* ── Newsletter signup form ────────────────────────────────── */
+function SignupForm({ compact }) {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState("idle"); // idle | sending | done | error
+
+  const submit = async () => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setState("error"); return; }
+    setState("sending");
+    try {
+      const r = await fetch("/api/subscribe", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      setState(r.ok ? "done" : "error");
+    } catch (e) { setState("error"); }
+  };
+
+  if (state === "done") {
+    return (
+      <div style={{ border: `1px solid ${T.sage}`, background: T.greenL, padding: compact ? "14px 18px" : "18px 22px", borderRadius: 4 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.green }}>You're on the list.</div>
+        <div style={{ fontSize: 12, color: T.mid, marginTop: 4 }}>First issue lands on a Tuesday. See you there.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <input type="email" value={email} onChange={e => { setEmail(e.target.value); setState("idle"); }}
+          onKeyDown={e => { if (e.key === "Enter") submit(); }}
+          placeholder="Work email"
+          style={{ flex: "1 1 200px", padding: "12px 14px", borderRadius: 4, fontSize: 14, border: `1px solid ${T.border}`, background: T.white, color: T.ink, outline: "none" }}
+        />
+        <PrimaryBtn small onClick={submit} disabled={state === "sending"}>
+          {state === "sending" ? "Joining…" : "Subscribe"}
+        </PrimaryBtn>
+      </div>
+      {state === "error" && <div style={{ fontSize: 12, color: T.red, marginTop: 8 }}>Please enter a valid email address.</div>}
+      {!compact && <div style={{ fontSize: 11, color: T.muted, marginTop: 10 }}>Every other Tuesday. No spam, unsubscribe anytime.</div>}
+    </div>
+  );
+}
+
+/* ── Signup band (article footer / writing index) ───────────── */
+function SignupBand() {
+  return (
+    <div style={{ background: T.char, padding: "56px 32px", position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 560, margin: "0 auto", textAlign: "center" }}>
+        <Tag color="rgba(255,255,255,.55)" bg="rgba(255,255,255,.06)">The Adoption Gap</Tag>
+        <h3 style={{ fontSize: "clamp(20px,3vw,28px)", fontWeight: 800, color: T.white, margin: "14px 0 10px", letterSpacing: -.5 }}>
+          AI news, through an adoption lens.
+        </h3>
+        <p style={{ fontSize: 13.5, color: "rgba(255,255,255,.5)", lineHeight: 1.7, marginBottom: 24 }}>
+          Every other Tuesday: what happened in AI, why adoption will stall, and one practical thing to do about it.
+        </p>
+        <div style={{ maxWidth: 420, margin: "0 auto" }}>
+          <SignupForm compact />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WRITING INDEX
+══════════════════════════════════════════════════════════ */
+function WritingScreen({ onOpen }) {
+  return (
+    <div>
+      <section style={{ background: T.char, padding: "72px 32px 64px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto" }}>
+          <div className="fu" style={{ marginBottom: 18 }}><Tag color="rgba(255,255,255,.55)" bg="rgba(255,255,255,.06)">Writing</Tag></div>
+          <h1 className="fu1" style={{ fontSize: "clamp(30px,4.4vw,52px)", fontWeight: 800, color: T.white, letterSpacing: -1.2, lineHeight: 1.1, marginBottom: 16 }}>
+            The Adoption Gap
+          </h1>
+          <p className="fu2" style={{ fontSize: 15, color: "rgba(255,255,255,.55)", lineHeight: 1.75, maxWidth: 520 }}>
+            AI news for people who have to make it stick. What happened, why adoption will stall, and what to do about it. Written by a practitioner, not a pundit.
+          </p>
+        </div>
+      </section>
+
+      <section style={{ padding: "64px 32px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ display: "grid", gap: 1, background: T.rule, border: `1px solid ${T.rule}` }}>
+          {ARTICLES.map((a, i) => (
+            <button key={a.id} onClick={() => onOpen(a.id)}
+              style={{ background: T.white, padding: "32px 36px", textAlign: "left", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "center", transition: "background .2s", animation: `fadeUp .5s ${i * .08}s both` }}
+              onMouseEnter={e => e.currentTarget.style.background = T.paper}
+              onMouseLeave={e => e.currentTarget.style.background = T.white}
+            >
+              <div>
+                <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 10 }}>
+                  <span className="mono" style={{ fontSize: 10.5, color: T.muted, letterSpacing: 1 }}>{a.date.toUpperCase()}</span>
+                  <span style={{ width: 3, height: 3, background: T.border }} />
+                  <span style={{ fontSize: 11, color: T.muted }}>{a.read}</span>
+                </div>
+                <div style={{ fontSize: 21, fontWeight: 800, color: T.ink, letterSpacing: -.4, marginBottom: 8 }}>{a.title}</div>
+                <p style={{ fontSize: 13.5, color: T.mid, lineHeight: 1.7, maxWidth: 640 }}>{a.excerpt}</p>
+              </div>
+              <div className="mono" style={{ fontSize: 13, color: T.muted, paddingRight: 4 }}>→</div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <SignupBand/>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ARTICLE
+══════════════════════════════════════════════════════════ */
+function ArticleScreen({ article, onBack, onOpen, onStart }) {
+  const idx = ARTICLES.findIndex(a => a.id === article.id);
+  const next = ARTICLES[(idx + 1) % ARTICLES.length];
+  return (
+    <div>
+      <article style={{ maxWidth: 700, margin: "0 auto", padding: "64px 24px 24px" }}>
+        <button onClick={onBack} style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: T.muted, marginBottom: 28, transition: "color .15s" }}
+          onMouseEnter={e => e.currentTarget.style.color = T.char}
+          onMouseLeave={e => e.currentTarget.style.color = T.muted}
+        >← All writing</button>
+        <div className="fu" style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
+          <Tag>The Adoption Gap</Tag>
+          <span className="mono" style={{ fontSize: 10.5, color: T.muted, letterSpacing: 1 }}>{article.date.toUpperCase()} · {article.read.toUpperCase()}</span>
+        </div>
+        <h1 className="fu1" style={{ fontSize: "clamp(28px,4vw,44px)", fontWeight: 800, letterSpacing: -1, lineHeight: 1.12, marginBottom: 14 }}>{article.title}</h1>
+        <p className="fu2" style={{ fontSize: 16, color: T.mid, lineHeight: 1.7, marginBottom: 40, paddingBottom: 32, borderBottom: `1px solid ${T.rule}` }}>{article.excerpt}</p>
+
+        <div className="fu3">
+          {article.blocks.map((b, i) => {
+            if (b.h) return <h2 key={i} style={{ fontSize: 20, fontWeight: 800, letterSpacing: -.3, margin: "36px 0 14px", color: T.ink }}>{b.h}</h2>;
+            if (b.q) return <blockquote key={i} style={{ borderLeft: `3px solid ${T.sage}`, paddingLeft: 20, margin: "28px 0", fontSize: 17, fontWeight: 600, color: T.char, lineHeight: 1.6, letterSpacing: -.2 }}>{b.q}</blockquote>;
+            return <p key={i} style={{ fontSize: 15.5, color: T.body, lineHeight: 1.85, marginBottom: 20 }}>{rich(b.p)}</p>;
+          })}
+        </div>
+
+        <div style={{ marginTop: 48, paddingTop: 28, borderTop: `1px solid ${T.rule}`, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: T.muted }}>Written by</div>
+          <a href="https://www.linkedin.com/in/divyamkaushik/" target="_blank" rel="noreferrer" style={{ fontSize: 13.5, fontWeight: 700, color: T.char, textDecoration: "none", borderBottom: `1px solid ${T.border}` }}>Divyam Kaushik</a>
+          <span style={{ fontSize: 12, color: T.muted }}>Change practitioner · 15+ years</span>
+        </div>
+      </article>
+
+      <div style={{ maxWidth: 700, margin: "32px auto 0", padding: "0 24px 56px" }}>
+        <div style={{ border: `1px solid ${T.rule}`, background: T.white, padding: "28px", display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Is your organisation AI-ready?</div>
+            <p style={{ fontSize: 12.5, color: T.mid, lineHeight: 1.6 }}>Ten questions. A personalised readiness report in your inbox.</p>
+          </div>
+          <PrimaryBtn small onClick={() => onStart("ai")}>Take the diagnostic</PrimaryBtn>
+        </div>
+
+        {ARTICLES.length > 1 && (
+          <button onClick={() => onOpen(next.id)} style={{ width: "100%", textAlign: "left", marginTop: 16, border: `1px solid ${T.rule}`, background: T.white, padding: "24px 28px", transition: "background .2s" }}
+            onMouseEnter={e => e.currentTarget.style.background = T.paper}
+            onMouseLeave={e => e.currentTarget.style.background = T.white}
+          >
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", color: T.muted, marginBottom: 8 }}>Read next</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, letterSpacing: -.2 }}>{next.title} <span style={{ color: T.muted }}>→</span></div>
+          </button>
+        )}
+      </div>
+
+      <SignupBand/>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════
    HOME SCREEN
 ══════════════════════════════════════════════════════════ */
-function HomeScreen({ onStart }) {
+function HomeScreen({ onStart, onWriting }) {
   const [sample, setSample] = useState(false);
+  const latest = ARTICLES.slice(0, 2);
   return (
     <div>
       <SampleModal open={sample} onClose={()=>setSample(false)} onStart={()=>{setSample(false);onStart("change");}}/>
@@ -536,6 +725,59 @@ function HomeScreen({ onStart }) {
         </div>
       </section>
 
+      {/* WRITING */}
+      <section style={{ padding:"88px 32px", background:T.white, borderTop:`1px solid ${T.rule}` }}>
+        <div style={{ maxWidth:1100, margin:"0 auto" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:16, marginBottom:40 }}>
+            <div>
+              <Tag>Writing</Tag>
+              <h2 style={{ fontSize:"clamp(24px,3vw,32px)", fontWeight:800, marginTop:14, letterSpacing:-.5 }}>The Adoption Gap</h2>
+              <p style={{ color:T.mid, marginTop:10, maxWidth:460, fontSize:14 }}>AI news for people who have to make it stick. What happened, why adoption will stall, and what to do about it.</p>
+            </div>
+            <GhostBtn onClick={onWriting}>All writing</GhostBtn>
+          </div>
+          <div className="two-col" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:1, background:T.rule, border:`1px solid ${T.rule}` }}>
+            {latest.map(a=>(
+              <button key={a.id} onClick={()=>onWriting(a.id)}
+                style={{ background:T.paper, padding:"32px", textAlign:"left", transition:"background .2s" }}
+                onMouseEnter={e=>e.currentTarget.style.background=T.smoke}
+                onMouseLeave={e=>e.currentTarget.style.background=T.paper}
+              >
+                <div className="mono" style={{ fontSize:10.5, color:T.muted, letterSpacing:1, marginBottom:12 }}>{a.date.toUpperCase()} · {a.read.toUpperCase()}</div>
+                <div style={{ fontSize:18, fontWeight:800, letterSpacing:-.3, marginBottom:10, color:T.ink }}>{a.title}</div>
+                <p style={{ fontSize:13, color:T.mid, lineHeight:1.7 }}>{a.excerpt}</p>
+                <div style={{ marginTop:16, fontSize:12, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", color:T.sage }}>Read →</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ABOUT */}
+      <section id="about" style={{ padding:"88px 32px", background:T.smoke, borderTop:`1px solid ${T.rule}` }}>
+        <div className="two-col" style={{ maxWidth:1100, margin:"0 auto", display:"grid", gridTemplateColumns:".9fr 1.1fr", gap:64, alignItems:"center" }}>
+          <div>
+            <Tag>About</Tag>
+            <h2 style={{ fontSize:"clamp(24px,3vw,32px)", fontWeight:800, margin:"14px 0 0", letterSpacing:-.5, lineHeight:1.2 }}>Built by a practitioner,<br/>not a vendor.</h2>
+          </div>
+          <div>
+            <p style={{ fontSize:15, color:T.body, lineHeight:1.85, marginBottom:18 }}>
+              I'm <strong style={{ color:T.ink }}>Divyam Kaushik</strong>. For 15+ years I've led change inside large organisations — currently as an Organizational Change Manager at Deloitte Global, driving platform adoption across 120+ geographies.
+            </p>
+            <p style={{ fontSize:15, color:T.body, lineHeight:1.85, marginBottom:18 }}>
+              I built Adovio because I kept watching the same story play out: good technology, failed adoption. Every failed rollout I've seen failed in the same place — the human layer. These diagnostics are the ten-question version of the assessment I run in workshops.
+            </p>
+            <p style={{ fontSize:15, color:T.body, lineHeight:1.85, marginBottom:28 }}>
+              I also write <strong style={{ color:T.ink }}>The Adoption Gap</strong> — AI news through an adoption lens, every other Tuesday.
+            </p>
+            <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
+              <a href="https://www.linkedin.com/in/divyamkaushik/" target="_blank" rel="noreferrer" style={{ display:"inline-flex", alignItems:"center", padding:"13px 32px", fontSize:13, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", background:T.char, color:T.white, textDecoration:"none", borderRadius:4 }}>Connect on LinkedIn</a>
+              <GhostBtn onClick={onWriting}>Read the writing</GhostBtn>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section style={{ background:T.char, padding:"72px 32px", textAlign:"center", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", inset:0, backgroundImage:`linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px)`, backgroundSize:"48px 48px" }}/>
@@ -558,7 +800,17 @@ function HomeScreen({ onStart }) {
           <div style={{ fontSize:10, color:"rgba(255,255,255,.25)", letterSpacing:1.2, marginTop:2 }}>THE PATH TO ADOPTION</div>
         </div>
         <div style={{ textAlign:"center" }}>
-          <div style={{ fontSize:11, color:"rgba(255,255,255,.25)", letterSpacing:.5 }}>ADOVIO.IO · FREE FOR THE CHANGE COMMUNITY</div>
+          <div style={{ fontSize:11, color:"rgba(255,255,255,.25)", letterSpacing:.5, marginBottom:8 }}>ADOVIO.IO · FREE FOR THE CHANGE COMMUNITY</div>
+          <div style={{ display:"flex", gap:20, justifyContent:"center" }}>
+          <button onClick={()=>{ const el=document.getElementById("about"); if(el) el.scrollIntoView({behavior:"smooth"}); }} style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,.55)", letterSpacing:1.2, textTransform:"uppercase", borderBottom:"1px solid rgba(255,255,255,.2)", paddingBottom:1 }}
+            onMouseEnter={e=>e.currentTarget.style.color=T.white}
+            onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,.55)"}
+          >About</button>
+          <button onClick={onWriting} style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,.55)", letterSpacing:1.2, textTransform:"uppercase", borderBottom:"1px solid rgba(255,255,255,.2)", paddingBottom:1 }}
+            onMouseEnter={e=>e.currentTarget.style.color=T.white}
+            onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,.55)"}
+          >The Adoption Gap — Writing</button>
+          </div>
         </div>
         <div style={{ textAlign:"right" }}>
           <div style={{ fontSize:11, color:"rgba(255,255,255,.35)", letterSpacing:.5, marginBottom:4 }}>BUILT BY</div>
@@ -747,6 +999,32 @@ function GeneratingScreen({ type }) {
   );
 }
 
+/* ── Debrief offer (confirmation screen) ─────────────────────── */
+function DebriefCard() {
+  const open = DEBRIEF_BOOKING_URL && DEBRIEF_BOOKING_URL.length > 0;
+  return (
+    <div style={{ border:`1px solid ${T.char}`, background:T.white, padding:"26px", marginBottom:20, textAlign:"left", position:"relative", overflow:"hidden" }}>
+      <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:T.sage }}/>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10, flexWrap:"wrap", gap:8 }}>
+        <Tag color={T.green} bg={T.greenL}>1-on-1 Debrief</Tag>
+        <div style={{ fontSize:18, fontWeight:800, color:T.ink, letterSpacing:-.5 }}>{DEBRIEF_PRICE}<span style={{ fontSize:11, fontWeight:500, color:T.muted }}> / 20 min</span></div>
+      </div>
+      <div style={{ fontSize:15, fontWeight:800, color:T.ink, marginBottom:8, letterSpacing:-.2 }}>Walk through your results with me.</div>
+      <p style={{ fontSize:12.5, color:T.mid, lineHeight:1.7, marginBottom:18 }}>
+        Twenty minutes, one-on-one. We'll go through your scores, name the single risk that matters most, and leave with a 30-day action plan for your initiative.
+      </p>
+      {open ? (
+        <a href={DEBRIEF_BOOKING_URL} target="_blank" rel="noreferrer" style={{ display:"inline-block", padding:"12px 28px", background:T.sage, color:T.white, fontSize:12, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", textDecoration:"none", borderRadius:4 }}>Book your debrief</a>
+      ) : (
+        <div>
+          <button disabled style={{ display:"inline-block", padding:"12px 28px", background:T.border, color:T.muted, fontSize:12, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", borderRadius:4, cursor:"not-allowed" }}>Booking opens soon</button>
+          <p style={{ fontSize:11.5, color:T.muted, marginTop:10 }}>Subscribe above and you'll be first to know.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════
    CONFIRMATION
 ══════════════════════════════════════════════════════════ */
@@ -771,6 +1049,14 @@ function ConfirmationScreen({ data, onRestart, onOther }) {
         <Dial score={overall} size={160}/>
         <p style={{ fontSize:12.5, color:T.muted, marginTop:16, lineHeight:1.65 }}>Full analysis, findings, risk areas, and five recommended actions are in your email.</p>
       </div>
+
+      <div style={{ border:`1px solid ${T.rule}`, padding:"22px 26px", marginBottom:20, textAlign:"left" }}>
+        <div style={{ fontSize:13, fontWeight:700, color:T.ink, marginBottom:4 }}>Get The Adoption Gap</div>
+        <p style={{ fontSize:12, color:T.mid, lineHeight:1.6, marginBottom:16 }}>AI news through an adoption lens, every other Tuesday. Written by the practitioner who built Adovio.</p>
+        <SignupForm compact/>
+      </div>
+
+      <DebriefCard/>
 
       <div style={{ border:`1px solid ${T.rule}`, padding:"22px 26px", marginBottom:20, textAlign:"left", display:"flex", gap:20, alignItems:"center", flexWrap:"wrap" }}>
         <div style={{ flex:1, minWidth:180 }}>
@@ -799,6 +1085,7 @@ function ConfirmationScreen({ data, onRestart, onOther }) {
 export default function App() {
   const [screen, setScreen]           = useState("home");
   const [type, setType]               = useState(null);
+  const [articleId, setArticleId]     = useState(null);
   const [context, setContext]         = useState({ orgName:"", role:"", changeDesc:"", industry:"", size:"" });
   const [answers, setAnswers]         = useState({});
   const [email, setEmail]             = useState("");
@@ -811,6 +1098,29 @@ export default function App() {
     document.head.appendChild(s);
     return()=>document.head.removeChild(s);
   },[]);
+
+  // Deep links: #/writing and #/writing/<id>
+  useEffect(()=>{
+    const applyHash = () => {
+      const h = window.location.hash;
+      const m = h.match(/^#\/writing\/([\w-]+)/);
+      if (m && ARTICLES.some(a=>a.id===m[1])) { setArticleId(m[1]); setScreen("article"); window.scrollTo(0,0); }
+      else if (h === "#/writing") { setScreen("writing"); window.scrollTo(0,0); }
+      else if (h === "" || h === "#" || h === "#/") { setScreen(s => (s === "writing" || s === "article") ? "home" : s); }
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return ()=>window.removeEventListener("hashchange", applyHash);
+  },[]);
+
+  const goHome = () => { setScreen("home"); window.location.hash = ""; document.title = "Adovio — Change Intelligence Platform"; window.scrollTo(0,0); };
+  const goWriting = (id) => {
+    if (id) { openArticle(id); return; }
+    setScreen("writing"); window.location.hash = "#/writing";
+    document.title = "The Adoption Gap — Adovio";
+    window.scrollTo(0,0);
+  };
+  const openArticle = (id) => { setArticleId(id); setScreen("article"); window.location.hash = `#/writing/${id}`; const a = ARTICLES.find(x=>x.id===id); if (a) document.title = `${a.title} — The Adoption Gap`; window.scrollTo(0,0); };
 
   const resetFor = (t) => {
     setType(t); setAnswers({});
@@ -855,11 +1165,15 @@ export default function App() {
   return (
     <div style={{ minHeight:"100vh", background:T.paper }}>
       <nav style={{ position:"sticky", top:0, zIndex:100, background:"rgba(250,250,249,.92)", backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)", borderBottom:`1px solid ${T.rule}`, padding:"0 28px", height:58, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <button onClick={()=>{ setScreen("home"); window.scrollTo(0,0); }} style={{ fontSize:14, fontWeight:800, color:T.char, letterSpacing:.5, textTransform:"uppercase" }}>
+        <button onClick={goHome} style={{ fontSize:14, fontWeight:800, color:T.char, letterSpacing:.5, textTransform:"uppercase" }}>
           Adovio
         </button>
         <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-          <button onClick={()=>resetFor("change")} style={{ padding:"7px 14px", fontSize:11.5, fontWeight:700, letterSpacing:.6, textTransform:"uppercase", color:T.mid, transition:"color .15s" }}
+          <button onClick={goWriting} className="navhide" style={{ padding:"7px 14px", fontSize:11.5, fontWeight:700, letterSpacing:.6, textTransform:"uppercase", color:screen==="writing"||screen==="article"?T.char:T.mid, transition:"color .15s" }}
+            onMouseEnter={e=>e.currentTarget.style.color=T.char}
+            onMouseLeave={e=>e.currentTarget.style.color=(screen==="writing"||screen==="article")?T.char:T.mid}
+          >Writing</button>
+          <button onClick={()=>resetFor("change")} className="navhide" style={{ padding:"7px 14px", fontSize:11.5, fontWeight:700, letterSpacing:.6, textTransform:"uppercase", color:T.mid, transition:"color .15s" }}
             onMouseEnter={e=>e.currentTarget.style.color=T.char}
             onMouseLeave={e=>e.currentTarget.style.color=T.mid}
           >Change Readiness</button>
@@ -867,12 +1181,14 @@ export default function App() {
         </div>
       </nav>
 
-      {screen==="home"         && <HomeScreen onStart={resetFor}/>}
+      {screen==="home"         && <HomeScreen onStart={resetFor} onWriting={goWriting}/>}
+      {screen==="writing"      && <WritingScreen onOpen={openArticle}/>}
+      {screen==="article"      && articleId && <ArticleScreen article={ARTICLES.find(a=>a.id===articleId)} onBack={goWriting} onOpen={openArticle} onStart={resetFor}/>}
       {screen==="context"      && <ContextStep type={type} context={context} setContext={setContext} onNext={()=>{ setScreen("questions"); window.scrollTo(0,0); }} onBack={()=>setScreen("home")}/>}
       {screen==="questions"    && <QuestionsStep type={type} answers={answers} setAnswers={setAnswers} onNext={()=>{ setScreen("email"); window.scrollTo(0,0); }} onBack={()=>setScreen("context")}/>}
       {screen==="email"        && <EmailStep type={type} answers={answers} email={email} setEmail={setEmail} name={name} setName={setName} onNext={handleGenerate} onBack={()=>setScreen("questions")}/>}
       {screen==="generating"   && <GeneratingScreen type={type}/>}
-      {screen==="confirmation" && confirmData && <ConfirmationScreen data={confirmData} onRestart={()=>setScreen("home")} onOther={()=>resetFor(type==="change"?"ai":"change")}/>}
+      {screen==="confirmation" && confirmData && <ConfirmationScreen data={confirmData} onRestart={goHome} onOther={()=>resetFor(type==="change"?"ai":"change")}/>}
     </div>
   );
 }
