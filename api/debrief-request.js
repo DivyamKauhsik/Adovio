@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     "Content-Type": "application/json",
     Authorization: `Bearer ${resendKey}`,
   };
-  const ownerTo = process.env.NOTIFY_EMAIL || "portmoodypulse@gmail.com";
+  const ownerTo = process.env.NOTIFY_EMAIL || "kaushik.divyam@gmail.com";
   const stamp = new Date().toISOString();
 
   // 1. Notify the owner
