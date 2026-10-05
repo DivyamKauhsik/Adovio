@@ -1001,7 +1001,25 @@ function GeneratingScreen({ type }) {
 
 /* ── Debrief offer (confirmation screen) ─────────────────────── */
 function DebriefCard() {
-  const open = DEBRIEF_BOOKING_URL && DEBRIEF_BOOKING_URL.length > 0;
+  const direct = DEBRIEF_BOOKING_URL && DEBRIEF_BOOKING_URL.length > 0;
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [times, setTimes] = useState("");
+  const [state, setState] = useState("idle"); // idle | sending | done | error
+
+  const submit = async () => {
+    if (!name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setState("error"); return; }
+    setState("sending");
+    try {
+      const r = await fetch("/api/debrief-request", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), times: times.trim() }),
+      });
+      setState(r.ok ? "done" : "error");
+    } catch (e) { setState("error"); }
+  };
+
   return (
     <div style={{ border:`1px solid ${T.char}`, background:T.white, padding:"26px", marginBottom:20, textAlign:"left", position:"relative", overflow:"hidden" }}>
       <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:T.sage }}/>
@@ -1013,12 +1031,30 @@ function DebriefCard() {
       <p style={{ fontSize:12.5, color:T.mid, lineHeight:1.7, marginBottom:18 }}>
         Twenty minutes, one-on-one. We'll go through your scores, name the single risk that matters most, and leave with a 30-day action plan for your initiative.
       </p>
-      {open ? (
+      {direct ? (
         <a href={DEBRIEF_BOOKING_URL} target="_blank" rel="noreferrer" style={{ display:"inline-block", padding:"12px 28px", background:T.sage, color:T.white, fontSize:12, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", textDecoration:"none", borderRadius:4 }}>Book your debrief</a>
+      ) : state === "done" ? (
+        <div style={{ border:`1px solid ${T.sage}`, background:T.greenL, padding:"16px 20px", borderRadius:4 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:T.green }}>Request received.</div>
+          <div style={{ fontSize:12, color:T.mid, marginTop:4 }}>I'll reply within 24 hours with payment and scheduling details.</div>
+        </div>
+      ) : !open ? (
+        <PrimaryBtn small onClick={()=>setOpen(true)}>Request your debrief</PrimaryBtn>
       ) : (
-        <div>
-          <button disabled style={{ display:"inline-block", padding:"12px 28px", background:T.border, color:T.muted, fontSize:12, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", borderRadius:4, cursor:"not-allowed" }}>Booking opens soon</button>
-          <p style={{ fontSize:11.5, color:T.muted, marginTop:10 }}>Subscribe above and you'll be first to know.</p>
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div className="two-col" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+            <input value={name} onChange={e=>{ setName(e.target.value); setState("idle"); }} placeholder="Your name"
+              style={{ padding:"12px 14px", borderRadius:4, fontSize:14, border:`1px solid ${T.border}`, background:T.white, color:T.ink, outline:"none" }}/>
+            <input value={email} onChange={e=>{ setEmail(e.target.value); setState("idle"); }} placeholder="Work email" type="email"
+              style={{ padding:"12px 14px", borderRadius:4, fontSize:14, border:`1px solid ${T.border}`, background:T.white, color:T.ink, outline:"none" }}/>
+          </div>
+          <textarea value={times} onChange={e=>setTimes(e.target.value)} placeholder="What days/times work for you? (e.g. Tue/Thu afternoons PT)" rows={2}
+            style={{ padding:"12px 14px", borderRadius:4, fontSize:14, border:`1px solid ${T.border}`, background:T.white, color:T.ink, outline:"none", resize:"vertical", fontFamily:"'Inter',sans-serif" }}/>
+          {state === "error" && <div style={{ fontSize:12, color:T.red }}>Please add your name and a valid email.</div>}
+          <div>
+            <PrimaryBtn small onClick={submit} disabled={state==="sending"}>{state==="sending"?"Sending…":"Send request"}</PrimaryBtn>
+          </div>
+          <div style={{ fontSize:11, color:T.muted }}>No payment now — I'll confirm details by email.</div>
         </div>
       )}
     </div>
